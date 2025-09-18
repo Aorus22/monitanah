@@ -143,11 +143,11 @@
             <!-- TDS -->
             <div class="p-4 bg-amber-50 rounded-lg">
                 <div class="flex items-center justify-between">
-                    <span class="font-medium text-gray-600">TDS (ppm)</span>
+                    <span class="font-medium text-gray-600">Kelembapan Tanah</span>
                     <i class="fas fa-flask text-amber-500"></i>
                 </div>
                 <div id="tds" class="text-3xl font-bold mt-2">-</div>
-                <div class="text-sm text-gray-500 mt-1">Optimal: 600 - 1200 ppm</div>
+                <div class="text-sm text-gray-500 mt-1">Optimal: 20% - 60&</div>
 
                 <!-- Bar indikator tds -->
                 <div class="mt-2">
@@ -226,7 +226,7 @@
 <!--        tdsBar.classList.add("bg-green-500");-->
 <!--        tdsNote.classList.add("hidden");-->
 <!--    }-->
-<!--}-->
+<!-- }-->
 
 <!--Contoh panggilan fungsi:-->
 <!--updateTdsDisplay(1350);-->
