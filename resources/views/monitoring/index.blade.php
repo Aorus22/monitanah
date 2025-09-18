@@ -830,7 +830,7 @@ if (!isNaN(tdsVal)) {
     tdsDisplay.textContent = `${tdsVal.toFixed(0)}%`;
     tdsDisplay.style.color = '';
 
-    if (tdsVal < 600) {
+    if (tdsVal < 20) {
         tdsDisplay.style.color = '#facc15'; // Kuning
         tdsBar.style.width = '33%';
         tdsBar.style.backgroundColor = '#facc15';
@@ -841,7 +841,7 @@ if (!isNaN(tdsVal)) {
             lastTdsCondition = 'low';
         }
 
-    } else if (tdsVal <= 1200) {
+    } else if (tdsVal <= 60) {
         tdsDisplay.style.color = '#16a34a'; // Hijau
         tdsBar.style.width = '66%';
         tdsBar.style.backgroundColor = '#34d399';
