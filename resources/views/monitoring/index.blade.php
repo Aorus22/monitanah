@@ -1233,7 +1233,7 @@ function showTempActionGuide(tempValue, condition) {
                     ...chartOptions.plugins,
                     title: {
                         display: true,
-                        text: 'Suhu Air (°C)',
+                        text: 'Suhu Tanah (°C)',
                         font: {
                             size: 16,
                             weight: 'bold'
@@ -1271,7 +1271,7 @@ function showTempActionGuide(tempValue, condition) {
                     ...chartOptions.plugins,
                     title: {
                         display: true,
-                        text: 'Tingkat TDS (ppm)',
+                        text: 'Tingkat Kelembapan (%)',
                         font: {
                             size: 16,
                             weight: 'bold'
