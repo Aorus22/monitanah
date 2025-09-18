@@ -562,50 +562,50 @@ async function updateRealtimeSection() {
         let noteContent = '';
         let noteClass = '';
 
-        if (condition === 'low') {
-            noteClass = 'note-warning';
-            noteContent = `
-                <div class="note-header">
-                    <span class="note-icon">⚠️</span>
-                    <h3>pH Terlalu Rendah (${phValue.toFixed(1)})</h3>
-                </div>
-                <div class="note-body">
-                    <h4>🔧 Tindakan Manual yang Diperlukan:</h4>
-                    <ol>
-                        <li><strong>Hentikan sistem sementara</strong> - Matikan pompa dan aliran air</li>
-                        <li><strong>Tambahkan buffer alkali</strong> - Gunakan sodium bicarbonate (NaHCO₃) atau potassium hydroxide (KOH)</li>
-                        <li><strong>Aduk secara manual</strong> - Pastikan distribusi merata selama 10-15 menit</li>
-                        <li><strong>Tunggu stabilisasi</strong> - Biarkan selama 30 menit sebelum mengukur ulang</li>
-                        <li><strong>Uji kembali pH</strong> - Pastikan berada di range 6.5-7.5</li>
-                    </ol>
+        // if (condition === 'low') {
+        //     noteClass = 'note-warning';
+        //     noteContent = `
+        //         <div class="note-header">
+        //             <span class="note-icon">⚠️</span>
+        //             <h3>pH Terlalu Rendah (${phValue.toFixed(1)})</h3>
+        //         </div>
+        //         <div class="note-body">
+        //             <h4>🔧 Tindakan Manual yang Diperlukan:</h4>
+        //             <ol>
+        //                 <li><strong>Hentikan sistem sementara</strong> - Matikan pompa dan aliran air</li>
+        //                 <li><strong>Tambahkan buffer alkali</strong> - Gunakan sodium bicarbonate (NaHCO₃) atau potassium hydroxide (KOH)</li>
+        //                 <li><strong>Aduk secara manual</strong> - Pastikan distribusi merata selama 10-15 menit</li>
+        //                 <li><strong>Tunggu stabilisasi</strong> - Biarkan selama 30 menit sebelum mengukur ulang</li>
+        //                 <li><strong>Uji kembali pH</strong> - Pastikan berada di range 6.5-7.5</li>
+        //             </ol>
 
-                    <div class="warning-box">
-                        <strong>⚠️ Peringatan:</strong> Tambahkan buffer secara bertahap untuk menghindari perubahan pH yang terlalu drastis!
-                    </div>
-                </div>
-            `;
-        } else if (condition === 'high') {
-            noteClass = 'note-danger';
-            noteContent = `
-                <div class="note-header">
-                    <span class="note-icon">🚨</span>
-                    <h3>pH Terlalu Tinggi (${phValue.toFixed(1)})</h3>
-                </div>
-                <div class="note-body">
-                    <h4>🚨 Tindakan Manual Darurat:</h4>
-                    <ol>
-                        <li><strong>STOP sistem segera!</strong> - Matikan semua peralatan dan isolasi area</li>
-                        <li><strong>Tambahkan asam lemah</strong> - Gunakan asam sitrat atau asam asetat (jangan HCl)</li>
-                        <li><strong>Aduk perlahan</strong> - Gunakan alat non-logam, hindari percikan</li>
-                        <li><strong>Ventilasi area kerja</strong> - Pastikan sirkulasi udara yang baik</li>
-                        <li><strong>Monitor terus-menerus</strong> - Cek pH setiap 15 menit sampai stabil</li>
-                        <li><strong>Bilas peralatan</strong> - Bersihkan semua sensor dan peralatan</li>
-                    </ol>
+        //             <div class="warning-box">
+        //                 <strong>⚠️ Peringatan:</strong> Tambahkan buffer secara bertahap untuk menghindari perubahan pH yang terlalu drastis!
+        //             </div>
+        //         </div>
+        //     `;
+        // } else if (condition === 'high') {
+        //     noteClass = 'note-danger';
+        //     noteContent = `
+        //         <div class="note-header">
+        //             <span class="note-icon">🚨</span>
+        //             <h3>pH Terlalu Tinggi (${phValue.toFixed(1)})</h3>
+        //         </div>
+        //         <div class="note-body">
+        //             <h4>🚨 Tindakan Manual Darurat:</h4>
+        //             <ol>
+        //                 <li><strong>STOP sistem segera!</strong> - Matikan semua peralatan dan isolasi area</li>
+        //                 <li><strong>Tambahkan asam lemah</strong> - Gunakan asam sitrat atau asam asetat (jangan HCl)</li>
+        //                 <li><strong>Aduk perlahan</strong> - Gunakan alat non-logam, hindari percikan</li>
+        //                 <li><strong>Ventilasi area kerja</strong> - Pastikan sirkulasi udara yang baik</li>
+        //                 <li><strong>Monitor terus-menerus</strong> - Cek pH setiap 15 menit sampai stabil</li>
+        //                 <li><strong>Bilas peralatan</strong> - Bersihkan semua sensor dan peralatan</li>
+        //             </ol>
 
 
-                </div>
-            `;
-        }
+        //         </div>
+        //     `;
+        // }
 
         // Buat elemen note box
         const noteBox = document.createElement('div');
