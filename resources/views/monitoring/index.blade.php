@@ -870,42 +870,42 @@ function showTdsActionGuide(tdsValue, condition) {
   document.querySelectorAll('.tds-action-note').forEach(el => el.remove());
 
   // Konfigurasi isi dan tampilan berdasarkan kondisi
-  const config = {
-    low: {
-      icon: '🧪',
-      title: `TDS Terlalu Rendah (${tdsValue.toFixed(0)} ppm)`,
-      tips: [
-        'Tambahkan nutrisi cair sesuai kebutuhan tanaman',
-        'Pastikan air sistem tidak terlalu encer akibat penambahan air',
-        'Gunakan EC meter sebagai verifikasi tambahan',
-        'Aduk sistem agar nutrisi merata',
-        'Ukur kembali TDS setelah 15 menit'
-      ],
-      border: 'border-yellow-400',
-      note: `
-        <div class="mt-4 bg-yellow-100 border border-yellow-400 text-yellow-800 p-3 rounded-md text-sm">
-          ⚠️ Tambahkan nutrisi secara bertahap agar tidak melewati batas optimal!
-        </div>
-      `
-    },
-    high: {
-      icon: '⚠️',
-      title: `TDS Terlalu Tinggi (${tdsValue.toFixed(0)} ppm)`,
-      tips: [
-        'Buang sebagian air sistem (20-30%)',
-        'Ganti dengan air bersih tanpa nutrisi',
-        'Pastikan sirkulasi air tetap aktif',
-        'Periksa efek pada ikan dan tanaman',
-        'Ukur ulang setelah penggantian air'
-      ],
-      border: 'border-red-500',
-      note: `
-        <div class="mt-4 bg-red-100 border border-red-500 text-red-800 p-3 rounded-md text-sm">
-          ‼️ TDS tinggi bisa menyebabkan stres pada ikan dan menghambat penyerapan nutrisi tanaman.
-        </div>
-      `
-    }
-  };
+  // const config = {
+  //   low: {
+  //     icon: '🧪',
+  //     title: `TDS Terlalu Rendah (${tdsValue.toFixed(0)} ppm)`,
+  //     tips: [
+  //       'Tambahkan nutrisi cair sesuai kebutuhan tanaman',
+  //       'Pastikan air sistem tidak terlalu encer akibat penambahan air',
+  //       'Gunakan EC meter sebagai verifikasi tambahan',
+  //       'Aduk sistem agar nutrisi merata',
+  //       'Ukur kembali TDS setelah 15 menit'
+  //     ],
+  //     border: 'border-yellow-400',
+  //     note: `
+  //       <div class="mt-4 bg-yellow-100 border border-yellow-400 text-yellow-800 p-3 rounded-md text-sm">
+  //         ⚠️ Tambahkan nutrisi secara bertahap agar tidak melewati batas optimal!
+  //       </div>
+  //     `
+  //   },
+  //   high: {
+  //     icon: '⚠️',
+  //     title: `TDS Terlalu Tinggi (${tdsValue.toFixed(0)} ppm)`,
+  //     tips: [
+  //       'Buang sebagian air sistem (20-30%)',
+  //       'Ganti dengan air bersih tanpa nutrisi',
+  //       'Pastikan sirkulasi air tetap aktif',
+  //       'Periksa efek pada ikan dan tanaman',
+  //       'Ukur ulang setelah penggantian air'
+  //     ],
+  //     border: 'border-red-500',
+  //     note: `
+  //       <div class="mt-4 bg-red-100 border border-red-500 text-red-800 p-3 rounded-md text-sm">
+  //         ‼️ TDS tinggi bisa menyebabkan stres pada ikan dan menghambat penyerapan nutrisi tanaman.
+  //       </div>
+  //     `
+  //   }
+  // };
 
   const { icon, title, tips, border, note } = config[condition];
 
