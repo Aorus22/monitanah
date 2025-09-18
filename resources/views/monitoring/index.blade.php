@@ -287,7 +287,7 @@
         </div>
 
         <div class="max-w-6xl mx-auto p-6">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Riwayat Semprotan Pompa pH</h2>
+<!--     <h2 class="text-2xl font-semibold text-gray-800 mb-6">Riwayat Semprotan Pompa pH</h2>
 
     <div class="overflow-x-auto bg-white shadow rounded-lg">
         <table class="min-w-full divide-y divide-gray-200">
@@ -393,7 +393,7 @@
     <div class="mt-6">
         {{ $logs->links('pagination::tailwind') }}
     </div>
-</div>
+</div> -->
 
         <!-- Footer -->
         <footer class="text-center py-6 text-gray-500 text-sm border-t">
