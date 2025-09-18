@@ -827,7 +827,7 @@ const tdsBar = document.getElementById('tds-bar');
 const tdsStatus = document.getElementById('tds-status');
 
 if (!isNaN(tdsVal)) {
-    tdsDisplay.textContent = `${tdsVal.toFixed(0)} ppm`;
+    tdsDisplay.textContent = `${tdsVal.toFixed(0)}%`;
     tdsDisplay.style.color = '';
 
     if (tdsVal < 600) {
