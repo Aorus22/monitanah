@@ -446,7 +446,7 @@ async function fetchRealtimeData() {
     errorElement.classList.add('hidden');
 
     try {
-        const res = await fetch('/api/sensor/realtime');
+        const res = await fetch('/esp/sensor-data');
         if (!res.ok) throw new Error('Response not OK');
         return await res.json();
     } catch (error) {
