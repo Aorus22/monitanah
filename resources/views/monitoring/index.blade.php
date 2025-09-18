@@ -1005,32 +1005,32 @@ function showTempActionGuide(tempValue, condition) {
   document.querySelectorAll('.suhu-action-note').forEach(el => el.remove());
 
   // Konfigurasi berdasarkan kondisi suhu
-  const config = {
-    cold: {
-      icon: '❄️',
-      title: `Suhu Terlalu Dingin (${tempValue.toFixed(1)}°C)`,
-      tips: [
-        'Periksa sirkulasi air dan lokasi sumber dingin',
-        'Tambahkan pemanas air jika tersedia',
-        'Isolasi area sistem dari udara luar',
-        'Gunakan penutup transparan',
-        'Monitor suhu setiap 30 menit'
-      ],
-      border: 'border-yellow-400'
-    },
-    hot: {
-      icon: '🔥',
-      title: `Suhu Terlalu Panas (${tempValue.toFixed(1)}°C)`,
-      tips: [
-        'Kurangi pencahayaan langsung',
-        'Tambahkan sistem pendingin atau kipas',
-        'Alirkan air segar perlahan',
-        'Pastikan sirkulasi tidak stagnan',
-        'Aerasi tambahan untuk ikan'
-      ],
-      border: 'border-red-500'
-    }
-  };
+  // const config = {
+  //   cold: {
+  //     icon: '❄️',
+  //     title: `Suhu Terlalu Dingin (${tempValue.toFixed(1)}°C)`,
+  //     tips: [
+  //       'Periksa sirkulasi air dan lokasi sumber dingin',
+  //       'Tambahkan pemanas air jika tersedia',
+  //       'Isolasi area sistem dari udara luar',
+  //       'Gunakan penutup transparan',
+  //       'Monitor suhu setiap 30 menit'
+  //     ],
+  //     border: 'border-yellow-400'
+  //   },
+  //   hot: {
+  //     icon: '🔥',
+  //     title: `Suhu Terlalu Panas (${tempValue.toFixed(1)}°C)`,
+  //     tips: [
+  //       'Kurangi pencahayaan langsung',
+  //       'Tambahkan sistem pendingin atau kipas',
+  //       'Alirkan air segar perlahan',
+  //       'Pastikan sirkulasi tidak stagnan',
+  //       'Aerasi tambahan untuk ikan'
+  //     ],
+  //     border: 'border-red-500'
+  //   }
+  // };
 
   const { icon, title, tips, border } = config[condition];
 
