@@ -38,6 +38,14 @@ class AquaponicController extends Controller
                 'status_pump_ph' => $request->status_pump_ph,
                 'status_pump_ppm' => $request->status_pump_ppm,
             ]);
+        } else {
+            SensorData::create([
+                'ph' => $request->ph,
+                'suhu' => $request->suhu,
+                'tds' => $request->tds,
+                'status_pump_ph' => $request->status_pump_ph,
+                'status_pump_ppm' => $request->status_pump_ppm,
+            ]);
         }
 
         return response()->json([
