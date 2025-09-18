@@ -147,7 +147,7 @@
                     <i class="fas fa-flask text-amber-500"></i>
                 </div>
                 <div id="tds" class="text-3xl font-bold mt-2">-</div>
-                <div class="text-sm text-gray-500 mt-1">Optimal: 20% - 60&</div>
+                <div class="text-sm text-gray-500 mt-1">Optimal: 20% - 80%</div>
 
                 <!-- Bar indikator tds -->
                 <div class="mt-2">
@@ -841,7 +841,7 @@ if (!isNaN(tdsVal)) {
             lastTdsCondition = 'low';
         }
 
-    } else if (tdsVal <= 60) {
+    } else if (tdsVal <= 80) {
         tdsDisplay.style.color = '#16a34a'; // Hijau
         tdsBar.style.width = '66%';
         tdsBar.style.backgroundColor = '#34d399';
