@@ -608,17 +608,17 @@ async function updateRealtimeSection() {
         // }
 
         // Buat elemen note box
-        const noteBox = document.createElement('div');
-        noteBox.className = `ph-action-note ${noteClass}`;
-        noteBox.innerHTML = `
-            <div class="note-container">
-                ${noteContent}
-                <div class="note-actions">
+        // const noteBox = document.createElement('div');
+        // noteBox.className = `ph-action-note ${noteClass}`;
+        // noteBox.innerHTML = `
+        //     <div class="note-container">
+        //         ${noteContent}
+        //         <div class="note-actions">
 
-                    <button class="btn-secondary" onclick="this.closest('.ph-action-note').remove(); isNoteShown = false;">Tutup</button>
-                </div>
-            </div>
-        `;
+        //             <button class="btn-secondary" onclick="this.closest('.ph-action-note').remove(); isNoteShown = false;">Tutup</button>
+        //         </div>
+        //     </div>
+        // `;
 
         // Tambahkan CSS jika belum ada
         if (!document.querySelector('#action-note-styles')) {
