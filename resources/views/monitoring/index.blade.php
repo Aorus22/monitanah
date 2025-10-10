@@ -58,109 +58,79 @@
         }
     </style>
 
-<body class="bg-gray-50 text-gray-800 min-h-screen p-4">
+<body class="bg-gray-50 text-gray-800 min-h-screen px-4 py-6 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <header class="text-center py-8">
-            <div class="flex items-center justify-center gap-3">
-                <div>
-                    <img src="/images/LOGO PT. JBG.png" alt="Logo PT. JBG" class="h-20 w-28 object-contain" />
-                </div>
-                <h1 class="text-3xl md:text-4xl font-bold text-emerald-800">Sistem Monitoring Tanah</h1>
+        <!-- Header with Export Buttons -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">
+                <i class="fas fa-chart-line text-emerald-600"></i> Dashboard Monitoring
+            </h1>
+            <div class="flex gap-2 w-full sm:w-auto">
+                <a href="{{ route('sensor.export.pdf') }}?data_type=realtime&sensor_type=all&start_date={{ date('Y-m-d', strtotime('-7 days')) }}&end_date={{ date('Y-m-d') }}"
+                   class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-all duration-300 flex items-center gap-2 flex-1 sm:flex-initial justify-center"
+                   target="_blank">
+                    <i class="fas fa-file-pdf"></i>
+                    <span class="hidden sm:inline">PDF</span>
+                </a>
+                <a href="{{ route('sensor.export.excel') }}?data_type=realtime&sensor_type=all&start_date={{ date('Y-m-d', strtotime('-7 days')) }}&end_date={{ date('Y-m-d') }}"
+                   class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-all duration-300 flex items-center gap-2 flex-1 sm:flex-initial justify-center">
+                    <i class="fas fa-file-excel"></i>
+                    <span class="hidden sm:inline">Excel</span>
+                </a>
             </div>
-            <p class="mt-2 text-gray-600">Monitoring real-time kondisi tanah Anda</p>
-        </header>
+        </div>
 <!-- Realtime Sensor Data -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-10">
     <!-- Box Sensor Data -->
-    <div class="bg-white shadow-lg rounded-xl p-6 card col-span-3">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-emerald-800 flex items-center gap-2">
+    <div class="bg-white shadow-lg rounded-xl p-4 sm:p-6 card col-span-3">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+            <h2 class="text-lg sm:text-xl font-bold text-emerald-800 flex items-center gap-2">
                 <i class="fas fa-sync-alt text-emerald-600"></i> Data Sensor Real-time
             </h2>
             <div id="realtime-loader" class="loader" style="display: none;"></div>
         </div>
+        <!-- Dropdown Sensor -->
+    <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <label for="sensorDropdown" class="text-gray-700 font-medium text-sm sm:text-base">Pilih Sensor:</label>
+            <select id="sensorDropdown" class="w-full sm:w-auto border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <option value="1">Sensor 1</option>
+                <option value="2">Sensor 2</option>
+                <option value="3">Sensor 3</option>
+                <option value="4">Sensor 4</option>
+            </select>
+        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- pH -->
-            <div class="p-4 bg-emerald-50 rounded-lg">
-                <div class="flex items-center justify-between">
-                    <span class="font-medium text-gray-600">pH Tanah</span>
-                    <i class="fas fa-seeding text-blue-500"></i>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <!-- Card pH -->
+            <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Tanah</span>
+                <div id="ph" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1">Optimal: 6.0 - 7.5</div>
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+                    <div id="ph-bar" class="h-full w-0 transition-all duration-500"></div>
                 </div>
-                <div id="ph" class="text-3xl font-bold mt-2">-</div>
-                <div class="text-sm text-gray-500 mt-1">Optimal: 6.3 - 7.5</div>
-
-                <!-- Bar indikator pH -->
-                <div class="mt-2">
-                    <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div id="ph-bar" class="h-full w-0 bg-gray-400 transition-all duration-500"></div>
-                    </div>
-                    <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
-                </div>
-
+                <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
             </div>
-
-            <!-- Suhu -->
-            <div class="p-4 bg-orange-50 rounded-lg">
-                <div class="flex items-center justify-between">
-                    <span class="font-medium text-gray-600">Suhu Tanah</span>
-                    <i class="fas fa-thermometer-half text-orange-500"></i>
+            <!-- Card Suhu -->
+            <div class="p-4 sm:p-3 bg-orange-50 rounded-lg flex flex-col items-center">
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Suhu Tanah</span>
+                <div id="suhu" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1">Optimal: 22°C - 30°C</div>
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+                    <div id="suhu-bar" class="h-full w-0 transition-all duration-500"></div>
                 </div>
-                <div id="suhu" class="text-3xl font-bold mt-2">-</div>
-                <div class="text-sm text-gray-500 mt-1">Optimal: 22°C - 30°C</div>
-
-                <!-- Bar indikator suhu -->
-                <div class="mt-2">
-                    <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div id="suhu-bar" class="h-full w-0 transition-all duration-500"></div>
-                    </div>
-                    <div id="suhu-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
-                </div>
-
-                <!-- Peringatan jika suhu tidak optimal -->
-    <!--<div id="suhu-note" class="mt-4 p-4 bg-red-100 border border-yellow-400 text-yellow-800 rounded-md hidden">-->
-    <!--    <div class="font-semibold mb-1">-->
-    <!--        ⚠️ Peringatan: Suhu Tidak Optimal!-->
-    <!--    </div>-->
-    <!--    <p class="text-sm mb-2">-->
-    <!--        Suhu air saat ini berada di luar kisaran optimal (22°C – 28°C), yang dapat mempengaruhi:-->
-    <!--    </p>-->
-    <!--    <ul class="list-disc ml-5 text-sm mb-2">-->
-    <!--        <li>Kesehatan dan metabolisme ikan (misalnya ikan nila atau lele).</li>-->
-    <!--        <li>Efisiensi penyerapan nutrisi oleh tanaman.</li>-->
-    <!--        <li>Performa mikroorganisme dalam sistem monitoring tanah.</li>-->
-    <!--    </ul>-->
-    <!--    <p class="text-sm font-medium mb-1">✅ <strong>Tindakan yang disarankan:</strong></p>-->
-    <!--    <ul class="list-decimal ml-5 text-sm">-->
-    <!--        <li>Jika suhu terlalu tinggi: tambahkan aerasi & tutup sistem dari sinar matahari langsung.</li>-->
-    <!--        <li>Periksa sensor suhu dan pastikan berfungsi dengan baik.</li>-->
-    <!--    </ul>-->
-    <!--</div>-->
-
+                <div id="suhu-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
             </div>
-
-            <!-- TDS -->
-            <div class="p-4 bg-amber-50 rounded-lg">
-                <div class="flex items-center justify-between">
-                    <span class="font-medium text-gray-600">Kelembapan Tanah</span>
-                    <i class="fas fa-flask text-amber-500"></i>
+            <!-- Card TDS -->
+            <div class="p-4 sm:p-3 bg-amber-50 rounded-lg flex flex-col items-center">
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Kelembapan Tanah</span>
+                <div id="tds" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1">Optimal: 20% - 80%</div>
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+                    <div id="tds-bar" class="h-full w-0 transition-all duration-500"></div>
                 </div>
-                <div id="tds" class="text-3xl font-bold mt-2">-</div>
-                <div class="text-sm text-gray-500 mt-1">Optimal: 20% - 80%</div>
-
-                <!-- Bar indikator tds -->
-                <div class="mt-2">
-                    <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div id="tds-bar" class="h-full w-0 transition-all duration-500"></div>
-                    </div>
-                    <div id="tds-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
-                </div>
-
-                <!-- Peringatan jika TDS tidak optimal -->
-    <div id="tds-note" class="mt-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-md hidden">
-        <!-- Konten diisi oleh JavaScript -->
-    </div>
+                <div id="tds-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
+            </div>
 <!--    <script>-->
 <!--   function updateTdsDisplay(tdsValue) {-->
 <!--    const tdsDisplay = document.getElementById('tds');-->
@@ -236,7 +206,7 @@
             </div>
 
             <!-- Sensor ID -->
-            <div class="p-4 bg-gray-50 rounded-lg md:col-span-2 lg:col-span-1">
+            <div class="p-2 bg-gray-50 rounded-lg md:col-span-2 lg:col-span-1">
                 <div class="flex items-center justify-between">
                     <span class="font-medium text-gray-600">ID Sensor</span>
                     <i class="fas fa-microchip text-gray-500"></i>
@@ -259,24 +229,26 @@
     </div>
 </div>
 
-        <!-- History Charts -->
-        <div class="bg-white shadow-lg rounded-xl p-6 card mb-10">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-bold text-emerald-800 flex items-center gap-2">
+    <!-- History Charts -->
+    <div class="bg-white shadow-lg rounded-xl p-4 sm:p-6 card mb-10 max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                <h2 class="text-lg sm:text-xl font-bold text-emerald-800 flex items-center gap-2">
                     <i class="fas fa-chart-line text-emerald-600"></i> Grafik History Sensor
                 </h2>
                 <div id="chart-loader" class="loader" style="display: none;"></div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                    <canvas id="phChart" height="200"></canvas>
-                </div>
-                <div>
-                    <canvas id="suhuChart" height="200"></canvas>
-                </div>
-                <div class="md:col-span-2">
-                    <canvas id="tdsChart" height="200"></canvas>
+            <div class="max-w-4xl mx-auto w-full px-0 sm:px-2 md:px-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-2 sm:p-3">
+                        <canvas id="phChart" height="220" style="width:100%"></canvas>
+                    </div>
+                    <div class="p-2 sm:p-3">
+                        <canvas id="suhuChart" height="220" style="width:100%"></canvas>
+                    </div>
+                    <div class="md:col-span-2 p-2 sm:p-3">
+                        <canvas id="tdsChart" height="220" style="width:100%"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -286,50 +258,38 @@
             </div>
         </div>
 
-        <div class="max-w-6xl mx-auto p-6">
-<!--     <h2 class="text-2xl font-semibold text-gray-800 mb-6">Riwayat Semprotan Pompa pH</h2>
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+    <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Riwayat Semprotan Pompa pH</h2>
 
-    <div class="overflow-x-auto bg-white shadow rounded-lg">
+    <div class="overflow-x-auto bg-white shadow rounded-lg -mx-4 sm:mx-0">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-100">
                 <tr>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">#</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Waktu Semprot</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">pH Sebelum</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">pH Sesudah</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Semprotan ke-</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">#</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">Waktu</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">pH</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">Suhu</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">TDS</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">Status</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-100">
                 @forelse ($logs as $log)
                 <tr>
-                    <td class="px-4 py-2 text-sm text-gray-800">{{ $loop->iteration + ($logs->currentPage() - 1) * $logs->perPage() }}</td>
-                    <td class="px-4 py-2 text-sm text-gray-700">{{ \Carbon\Carbon::parse($log->sprayed_at)->format('d M Y, H:i') }}</td>
-                    <td class="px-4 py-2 text-sm text-gray-700">{{ number_format($log->ph_before, 2) }}</td>
-                    <td class="px-4 py-2 text-sm text-gray-700">
-                        @if ($log->ph_after !== null)
-                            {{ number_format($log->ph_after, 2) }}
-                        @else
-                            <span class="text-gray-400 italic">Belum tersedia</span>
-                        @endif
-                    </td>
-                    <td class="px-4 py-2 text-sm text-gray-700">{{ $log->spray_number }}</td>
-                    <td class="px-4 py-2 text-sm">
-                        @if ($log->ph_after !== null)
-                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-md">
-                                Selesai
-                            </span>
-                        @else
-                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md">
-                                Menunggu After pH
-                            </span>
-                        @endif
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-800">{{ $loop->iteration + ($logs->currentPage() - 1) * $logs->perPage() }}</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 whitespace-nowrap">{{ \Carbon\Carbon::parse($log->created_at)->format('d M Y, H:i') }}</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-red-600">{{ number_format($log->ph, 2) }}</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700">{{ number_format($log->suhu, 1) }}°C</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 whitespace-nowrap">{{ number_format($log->tds, 0) }} ppm</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-md whitespace-nowrap">
+                            🔴 Pompa pH
+                        </span>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-4 py-4 text-center text-sm text-gray-400">
+                    <td colspan="6" class="px-3 sm:px-4 py-4 text-center text-xs sm:text-sm text-gray-400">
                         Belum ada riwayat semprotan.
                     </td>
                 </tr>
@@ -339,50 +299,42 @@
     </div>
 
     {{-- PAGINATION --}}
-    <div class="mt-6">
+    <div class="mt-4 sm:mt-6 px-4 sm:px-0">
         {{ $logs->links('pagination::tailwind') }}
     </div>
 </div>
-<div class="max-w-6xl mx-auto p-6">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Riwayat Semprotan Pompa PPM</h2>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+    <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Riwayat Semprotan Pompa PPM</h2>
 
-    <div class="overflow-x-auto bg-white shadow rounded-lg">
+    <div class="overflow-x-auto bg-white shadow rounded-lg -mx-4 sm:mx-0">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-100">
                 <tr>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">#</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Waktu Semprot</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">PPM Sebelum</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">PPM Sesudah</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Semprotan ke-</th>
-                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">#</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">Waktu</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">pH</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">Suhu</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">TDS</th>
+                    <th class="px-3 sm:px-4 py-3 text-left text-xs sm:text-sm font-semibold text-gray-600">Status</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-100">
                 @forelse ($logsppm as $log)
                 <tr>
-                    <td class="px-4 py-2 text-sm text-gray-800">{{ $loop->iteration + ($logsppm->currentPage() - 1) * $logs->perPage() }}</td>
-                    <td class="px-4 py-2 text-sm text-gray-700">{{ \Carbon\Carbon::parse($log->sprayed_at)->format('d M Y, H:i') }}</td>
-                    <td class="px-4 py-2 text-sm text-gray-700">{{ number_format($log->ppm_before, 0) }}</td>
-                    <td class="px-4 py-2 text-sm text-gray-700">
-                        @if ($log->ppm_after !== null)
-                            {{ number_format($log->ppm_after, 0) }}
-                        @else
-                            <span class="text-gray-400 italic">Belum tersedia</span>
-                        @endif
-                    </td>
-                    <td class="px-4 py-2 text-sm text-gray-700">{{ $log->spray_number }}</td>
-                    <td class="px-4 py-2 text-sm">
-                        @if ($log->ppm_after !== null)
-                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-md">Selesai</span>
-                        @else
-                            <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md">Menunggu</span>
-                        @endif
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-800">{{ $loop->iteration + ($logsppm->currentPage() - 1) * $logsppm->perPage() }}</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 whitespace-nowrap">{{ \Carbon\Carbon::parse($log->created_at)->format('d M Y, H:i') }}</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700">{{ number_format($log->ph, 2) }}</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm text-gray-700">{{ number_format($log->suhu, 1) }}°C</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-blue-600 whitespace-nowrap">{{ number_format($log->tds, 0) }} ppm</td>
+                    <td class="px-3 sm:px-4 py-2 text-xs sm:text-sm">
+                        <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-md whitespace-nowrap">
+                            🔵 Pompa PPM
+                        </span>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-4 py-4 text-center text-sm text-gray-400">Belum ada riwayat semprotan.</td>
+                    <td colspan="6" class="px-3 sm:px-4 py-4 text-center text-xs sm:text-sm text-gray-400">Belum ada riwayat semprotan.</td>
                 </tr>
                 @endforelse
             </tbody>
@@ -390,19 +342,26 @@
     </div>
 
     {{-- Pagination --}}
-    <div class="mt-6">
-        {{ $logs->links('pagination::tailwind') }}
+    <div class="mt-4 sm:mt-6 px-4 sm:px-0">
+        {{ $logsppm->links('pagination::tailwind') }}
     </div>
-</div> -->
+</div>
 
         <!-- Footer -->
-        <footer class="text-center py-6 text-gray-500 text-sm border-t">
-            <p>© 2025 Sistem Monitoring Tanah | Dibuat oleh mahasiswa POLIBAN <i class="fas fa-heart text-red-500"></i> untuk pertanian modern</p>
+        <footer class="text-center py-6 text-gray-500 text-sm border-t mt-10">
+            <div class="flex flex-col items-center gap-2">
+                <div class="flex items-center gap-3">
+                    <img src="/images/LOGO PT. JBG.png" alt="Logo JBG" class="h-8 w-auto" />
+                </div>
+                <p>© 2025 Sistem Monitoring Tanah</p>
+            </div>
         </footer>
     </div>
 
     <!-- JavaScript -->
     <script>
+
+let selectedSensorId = 1; // Default sensor 1
 
 let isNoteShown = false;
 let isTempNoteShown = false;
@@ -411,6 +370,24 @@ let isTdsNoteShown = false;
 let lastPhCondition = 'normal';
 let lastTempCondition = 'normal'; // <-- ❗ Wajib tambahkan ini
 let lastTdsCondition = 'normal';
+
+// Event listener untuk dropdown sensor
+document.addEventListener('DOMContentLoaded', () => {
+    const sensorDropdown = document.getElementById('sensorDropdown');
+
+    sensorDropdown.addEventListener('change', function() {
+        selectedSensorId = parseInt(this.value);
+        console.log('Sensor changed to:', selectedSensorId);
+
+        // Refetch data
+        updateRealtimeSection();
+        updateHistoryCharts();
+    });
+
+    // Initial load
+    updateRealtimeSection();
+    updateHistoryCharts();
+});
 
 // Fungsi untuk format waktu
 function formatTime(dateString) {
@@ -446,7 +423,7 @@ async function fetchRealtimeData() {
     errorElement.classList.add('hidden');
 
     try {
-        const res = await fetch('api/sensor/realtime');
+        const res = await fetch(`api/sensor/realtime?sensor_id=${selectedSensorId}`);
         if (!res.ok) throw new Error('Response not OK');
         return await res.json();
     } catch (error) {
@@ -510,41 +487,49 @@ async function updateRealtimeSection() {
     const phStatus = document.getElementById('ph-status');
 
     if (!isNaN(phVal)) {
-    phDisplay.textContent = phVal.toFixed(2);
+        phDisplay.textContent = phVal.toFixed(2);
+        phDisplay.classList.remove('text-green-600', 'text-yellow-500', 'text-red-700');
 
-    phDisplay.classList.remove('text-green-600', 'text-yellow-500', 'text-red-700');
-
-        if (phVal < 6.3) {
-            phDisplay.classList.add('text-yellow-500');
+        if (phVal < 6) {
+            phDisplay.classList.add('text-red-700');
             phBar.style.width = '33%';
-            phBar.style.backgroundColor = '#facc15';
+            phBar.style.backgroundColor = '#de2121';
             phStatus.textContent = 'Terlalu rendah';
-
             if (lastPhCondition !== 'low') {
                 showActionGuide(phVal, 'low');
                 lastPhCondition = 'low';
             }
-
-        } else if (phVal <= 7.5) {
+        } else {
             phDisplay.classList.add('text-green-600');
-            phBar.style.width = '66%';
+            phBar.style.width = '100%';
             phBar.style.backgroundColor = '#0ee697';
             phStatus.textContent = 'Optimal';
-
-            // ✅ Reset kondisi
             lastPhCondition = 'normal';
             isNoteShown = false;
+        }
+    }
 
+    //Display Suhu
+    const suhuVal = parseFloat(data.suhu);
+    const suhuDisplay = document.getElementById('suhu');
+    const suhuBar = document.getElementById('suhu-bar');
+    const suhuStatus = document.getElementById('suhu-status');
+
+    if (!isNaN(suhuVal)) {
+        suhuDisplay.textContent = suhuVal.toFixed(1) + '°C';
+
+        if (suhuVal < 22) {
+            suhuBar.style.width = '33%';
+            suhuBar.style.backgroundColor = '#facc15';
+            suhuStatus.textContent = 'Terlalu dingin';
+        } else if (suhuVal <= 30) {
+            suhuBar.style.width = '66%';
+            suhuBar.style.backgroundColor = '#34d399';
+            suhuStatus.textContent = 'Optimal';
         } else {
-            phDisplay.classList.add('text-red-700');
-            phBar.style.width = '100%';
-            phBar.style.backgroundColor = '#de2121';
-            phStatus.textContent = 'Terlalu tinggi';
-
-            if (lastPhCondition !== 'high') {
-                showActionGuide(phVal, 'high');
-                lastPhCondition = 'high';
-            }
+            suhuBar.style.width = '100%';
+            suhuBar.style.backgroundColor = '#de2121';
+            suhuStatus.textContent = 'Terlalu panas';
         }
     }
 
@@ -862,6 +847,7 @@ if (!isNaN(tdsVal)) {
         }
     }
 }
+
 function showTdsActionGuide(tdsValue, condition) {
   if (isTdsNoteShown) return;
   isTdsNoteShown = true;
@@ -950,51 +936,6 @@ function showTdsActionGuide(tdsValue, condition) {
   }
 
   document.body.appendChild(noteBox);
-}
-
-
-
-// --- Display Suhu ---
-const suhuVal     = parseFloat(data.suhu);
-const suhuDisplay = document.getElementById('suhu');
-const suhuBar     = document.getElementById('suhu-bar');
-const suhuStatus  = document.getElementById('suhu-status');
-
-if (!isNaN(suhuVal)) {
-  suhuDisplay.textContent = `${suhuVal.toFixed(1)}°C`;
-  suhuDisplay.style.color = '';
-
-  if (suhuVal < 22) {
-    suhuBar.style.width           = '33%';
-    suhuBar.style.backgroundColor = '#facc15';
-    suhuDisplay.style.color       = '#f59e0b';
-    suhuStatus.textContent        = 'Terlalu dingin';
-
-    if (lastTempCondition !== 'cold') {
-      showTempActionGuide(suhuVal, 'cold');
-      lastTempCondition = 'cold';
-    }
-
-  } else if (suhuVal <= 30) {
-    suhuBar.style.width           = '66%';
-    suhuBar.style.backgroundColor = '#34d399';
-    suhuDisplay.style.color       = '#16a34a';
-    suhuStatus.textContent        = 'Optimal';
-
-    lastTempCondition = 'normal';
-    isTempNoteShown   = false;
-
-  } else {
-    suhuBar.style.width           = '100%';
-    suhuBar.style.backgroundColor = '#de2121';
-    suhuDisplay.style.color       = '#dc2626';
-    suhuStatus.textContent        = 'Terlalu panas';
-
-    if (lastTempCondition !== 'hot') {
-      showTempActionGuide(suhuVal, 'hot');
-      lastTempCondition = 'hot';
-    }
-  }
 }
 
 function showTempActionGuide(tempValue, condition) {
@@ -1088,7 +1029,7 @@ function showTempActionGuide(tempValue, condition) {
             errorElement.classList.add('hidden');
 
             try {
-                const res = await fetch('/api/sensor/history');
+                const res = await fetch(`/api/sensor/history?sensor_id=${selectedSensorId}`);
                 if (!res.ok) throw new Error('Response not OK');
                 return await res.json();
             } catch (error) {
@@ -1284,17 +1225,15 @@ function showTempActionGuide(tempValue, condition) {
             }
         });
 
-        // Update data setiap 5 detik
+        // Update data realtime setiap 10 menit (600000 ms)
         setInterval(() => {
             updateRealtimeSection();
-            updateHistoryCharts();
-        }, 5000);
+        }, 600000);
 
-        // Panggilan awal saat halaman dimuat
-        document.addEventListener('DOMContentLoaded', () => {
-            updateRealtimeSection();
+        // Update data log/history setiap 1 hari (86400000 ms)
+        setInterval(() => {
             updateHistoryCharts();
-        });
+        }, 86400000);
     </script>
 </body>
 @endsection

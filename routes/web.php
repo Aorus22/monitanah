@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\AquaponicController;
+use App\Http\Controllers\SensorExportController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -42,6 +43,13 @@ Route::get('/', [MonitoringController::class, 'index'])->name('home');
 // Endpoint untuk menerima data ESP32
 Route::post('/esp/sensor-data', [MonitoringController::class, 'receiveEspData'])
     ->name('esp.receive_data');
+
+// Export Routes - Direct download, no form needed
+Route::prefix('export')->name('sensor.export.')->group(function () {
+    // Route::get('/', [SensorExportController::class, 'showExportForm'])->name('form'); // Not needed anymore
+    Route::get('/pdf', [SensorExportController::class, 'exportPdf'])->name('pdf');
+    Route::get('/excel', [SensorExportController::class, 'exportExcel'])->name('excel');
+});
 
 // Jika Anda perlu proxy API tanpa auth:
 // Route::get('/api/sensor/{type}', [MonitoringController::class, 'getLiveData'])

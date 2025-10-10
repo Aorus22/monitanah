@@ -7,7 +7,14 @@ use App\Models\SensorData;
 
 Route::post('/sensor/realtime', [AquaponicController::class, 'updateRealtime']);
 Route::post('/sensor/history', [AquaponicController::class, 'storeHistory']);
-Route::get('/sensor/realtime', function () {
+Route::get('/sensor/realtime', function (Request $request) {
+    $sensorId = $request->input('sensor_id', 1); // Default sensor 1
+
+    // Karena di DB belum ada field sensor_id, return null untuk sensor 2,3,4
+    if ($sensorId != 1) {
+        return response()->json(null);
+    }
+
     $latest = SensorData::latest()->first();
     return response()->json($latest);
 });

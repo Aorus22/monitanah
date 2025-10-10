@@ -162,50 +162,27 @@
 
   <!-- Enhanced Navigation -->
   <header class="fixed top-0 left-0 w-full z-50 bg-white/95 backdrop-blur-md shadow-sm transition-all duration-300">
-    <nav class="container mx-auto px-4 py-2 sm:py-3 md:py-4">
-      <div class="flex justify-between items-center h-16 sm:h-20">
-        <!-- Logo Section -->
-        <a href="/" class="flex items-center space-x-3 group focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-lg p-1">
-          <div class="relative transition-all duration-500 group-hover:scale-110">
-            <div>
-              <img src="/images/LOGO PT. JBG.png" alt="Logo PT. JBG" class="h-20 w-28 sm:h-24 sm:w-32 object-contain" />
-            </div>
-          </div>
+    <nav class="container mx-auto px-4 py-2">
+      <div class="flex justify-between items-center h-14">
+        <!-- Logo Section Kecil & Judul Minimalis -->
+        <a href="/" class="flex items-center gap-2 group focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-lg p-1">
+          <img src="/images/LOGO PT. JBG.png" alt="Logo PT. JBG" class="h-10 w-14 object-contain" />
           <div class="font-bold leading-tight">
-            <span class="text-gray-800 block text-base sm:text-lg">SISTEM MONITORING</span>
-            <span class="text-primary font-serif text-xs sm:text-sm tracking-wide">TANAH</span>
+            <span class="text-gray-800 block text-base">SISTEM MONITORING</span>
+            <span class="text-primary font-serif text-xs tracking-wide">TANAH</span>
           </div>
         </a>
-
-        <!-- Desktop Navigation Links -->
         <div class="hidden md:flex items-center space-x-6">
-          <!-- <a href="/" class="nav-link relative px-2 py-1 font-medium text-gray-700 hover:text-primary transition-all duration-300 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-gradient-to-r after:from-primary after:to-accent after:transition-all after:duration-300">
-            Beranda
-          </a> -->
-          <a href="/monitoring" class="nav-link relative px-2 py-1 font-medium text-gray-700 hover:text-primary transition-all duration-300 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-gradient-to-r after:from-primary after:to-accent after:transition-all after:duration-300">
+          <a href="/monitoring" class="nav-link relative px-2 py-1 font-medium text-gray-700 hover:text-primary transition-all duration-300">
             Monitoring
           </a>
-          <!-- <a href="/about" class="nav-link relative px-2 py-1 font-medium text-gray-700 hover:text-primary transition-all duration-300 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-gradient-to-r after:from-primary after:to-accent after:transition-all after:duration-300">
-            Tentang Kami
-          </a>
-          <a href="/contact" class="nav-link relative px-2 py-1 font-medium text-gray-700 hover:text-primary transition-all duration-300 after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 hover:after:w-full after:bg-gradient-to-r after:from-primary after:to-accent after:transition-all after:duration-300">
-            Kontak
-          </a> -->
-
-          <!-- CTA Button with better accessibility -->
-
         </div>
-
-
-      </div>
-
-
       </div>
     </nav>
   </header>
 
   <!-- App-style Bottom Navigation for Mobile -->
-  <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg py-2 px-3 z-40">
+  {{-- <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg py-2 px-3 z-40">
     <div class="flex justify-around items-center">
       <!-- <a href="/" class="flex flex-col items-center space-y-1 text-primary transition-colors">
         <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
@@ -241,7 +218,7 @@
         <span class="text-xs text-gray-700 font-medium">Tentang</span>
       </a> -->
     </div>
-  </div>
+  </div> --}}
 
 <div
   x-data="{ chatOpen: false }"
@@ -488,7 +465,7 @@
 </script> --}}
  --}}
   <!-- Main Content Area -->
-  <main class="flex-grow pt-20  md:pt-32" id="main-content">
+  <main class="flex-grow pt-20 px-4" id="main-content">
     <!-- This is where your page content will go -->
     @yield('content')
 </main>

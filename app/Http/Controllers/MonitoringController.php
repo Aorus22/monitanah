@@ -11,19 +11,32 @@ class MonitoringController extends Controller
 {
     public function index()
     {
-        $phLogs = \App\Models\PhPumpLog::whereNotNull('ph_before')->latest()->paginate(10, ['*'], 'ph');
-$ppmLogs = PpmPumpLog::whereNotNull('ppm_before')->latest()->paginate(10, ['*'], 'ppm');
+        $logs = \App\Models\SensorHistory::where('status_pump_ph', 1)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
 
-         $logsppm = PpmPumpLog::orderBy('sprayed_at', 'desc')->paginate(10); 
-        $logs = \App\Models\PhPumpLog::orderBy('sprayed_at', 'desc')->paginate(10);
+        $logsppm = \App\Models\SensorHistory::where('status_pump_ppm', 1)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'ppm');
+
+        $phLogs = $logs;
+        $ppmLogs = $logsppm;
+
         // Ambil updated_at terbaru
-   $lastUpdated = SensorData::latest('updated_at')->value('updated_at');
-        
-        return view('monitoring.index', compact('logs','logsppm','phLogs','ppmLogs','lastUpdated')); // tampilkan halaman monitoring
+        $lastUpdated = SensorData::latest('updated_at')->value('updated_at');
+
+        return view('monitoring.index', compact('logs','logsppm','phLogs','ppmLogs','lastUpdated'));
     }
 
-    public function getSensorHistory()
+    public function getSensorHistory(Request $request)
     {
+        $sensorId = $request->input('sensor_id', 1); // Default sensor 1
+
+        // Karena di DB belum ada field sensor_id, return kosong untuk sensor 2,3,4
+        if ($sensorId != 1) {
+            return response()->json([]);
+        }
+
         $data = SensorData::latest()->limit(50)->get()->reverse()->values();
         return response()->json($data);
     }
