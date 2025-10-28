@@ -414,9 +414,12 @@ function markActionComplete() {
 // Update tampilan realtime dari data
 async function updateRealtimeSection() {
     const data = await fetchRealtimeData();
+    const sensorIdElement = document.getElementById('sensor_id');
+    sensorIdElement.textContent = selectedSensorId || '-';
+
     if (!data) return;
 
-    document.getElementById('sensor_id').textContent = data.id || '-';
+    sensorIdElement.textContent = (data && (data.sensor_id || data.id)) || selectedSensorId || '-';
     document.getElementById('ph').textContent = data.ph || '-';
     document.getElementById('suhu').textContent = data.suhu ? `${data.suhu}°C` : '-';
     document.getElementById('tds').textContent = data.tds || '-';
