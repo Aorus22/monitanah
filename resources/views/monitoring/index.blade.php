@@ -91,55 +91,54 @@
         </div>
         <!-- Dropdown Sensor -->
         <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-            <label for="sensorDropdown" class="text-gray-700 font-medium text-sm sm:text-base">Pilih Sensor:</label>
-            <select id="sensorDropdown" class="w-full sm:w-auto border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
-                <option value="1">Sensor 1</option>
-                <option value="2">Sensor 2</option>
-                <option value="3">Sensor 3</option>
-                <option value="4">Sensor 4</option>
+            <label for="sensorType" class="text-gray-700 font-medium text-sm sm:text-base">Pilih Parameter:</label>
+            <select id="sensorType" class="w-full sm:w-auto border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <option value="ph">pH</option>
+                <option value="suhu">Suhu</option>
+                <option value="tds">Kelembapan</option>
             </select>
         </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <!-- Card pH -->
             <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
-                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Sensor 1</span>
-                <div id="ph" class="text-3xl sm:text-2xl font-bold">-</div>
-                <div class="text-xs text-gray-500 mt-1">Optimal: 6.0 - 7.5</div>
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Sensor 1</span>
+                <div id="sensor-value-1" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1" id="sensor-range-1">Optimal: 6.0 - 7.5</div>
                 <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
-                    <div id="ph-bar" class="h-full w-0 transition-all duration-500"></div>
+                    <div id="sensor-bar-1" class="h-full w-0 transition-all duration-500"></div>
                 </div>
-                <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
+                <div id="sensor-status-1" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
             </div>
         
             <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
-                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Sensor 2</span>
-                <div id="ph" class="text-3xl sm:text-2xl font-bold">-</div>
-                <div class="text-xs text-gray-500 mt-1">Optimal: 6.0 - 7.5</div>
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Sensor 2</span>
+                <div id="sensor-value-2" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1" id="sensor-range-2">Optimal: 6.0 - 7.5</div>
                 <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
-                    <div id="ph-bar" class="h-full w-0 transition-all duration-500"></div>
+                    <div id="sensor-bar-2" class="h-full w-0 transition-all duration-500"></div>
                 </div>
-                <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
+                <div id="sensor-status-2" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
             </div>
 
             <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
-                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Sensor 3</span>
-                <div id="ph" class="text-3xl sm:text-2xl font-bold">-</div>
-                <div class="text-xs text-gray-500 mt-1">Optimal: 6.0 - 7.5</div>
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Sensor 3</span>
+                <div id="sensor-value-3" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1" id="sensor-range-3">Optimal: 6.0 - 7.5</div>
                 <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
-                    <div id="ph-bar" class="h-full w-0 transition-all duration-500"></div>
+                    <div id="sensor-bar-3" class="h-full w-0 transition-all duration-500"></div>
                 </div>
-                <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
+                <div id="sensor-status-3" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
             </div>
 
             <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
-                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Sensor 4</span>
-                <div id="ph" class="text-3xl sm:text-2xl font-bold">-</div>
-                <div class="text-xs text-gray-500 mt-1">Optimal: 6.0 - 7.5</div>
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Sensor 4</span>
+                <div id="sensor-value-4" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1" id="sensor-range-4">Optimal: 6.0 - 7.5</div>
                 <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
-                    <div id="ph-bar" class="h-full w-0 transition-all duration-500"></div>
+                    <div id="sensor-bar-4" class="h-full w-0 transition-all duration-500"></div>
                 </div>
-                <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
+                <div id="sensor-status-4" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
             </div>
         
             <!-- Card Suhu -->
