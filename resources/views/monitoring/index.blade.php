@@ -90,7 +90,7 @@
             <div id="realtime-loader" class="loader" style="display: none;"></div>
         </div>
         <!-- Dropdown Sensor -->
-    <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+        <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
             <label for="sensorDropdown" class="text-gray-700 font-medium text-sm sm:text-base">Pilih Sensor:</label>
             <select id="sensorDropdown" class="w-full sm:w-auto border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
                 <option value="1">Sensor 1</option>
