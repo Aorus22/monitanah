@@ -91,12 +91,11 @@
         </div>
         <!-- Dropdown Sensor -->
         <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
-            <label for="sensorDropdown" class="text-gray-700 font-medium text-sm sm:text-base">Pilih Sensor:</label>
-            <select id="sensorDropdown" class="w-full sm:w-auto border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
-                <option value="1">Sensor 1</option>
-                <option value="2">Sensor 2</option>
-                <option value="3">Sensor 3</option>
-                <option value="4">Sensor 4</option>
+            <label for="sensorType" class="text-gray-700 font-medium text-sm sm:text-base">Pilih Parameter:</label>
+            <select id="sensorType" class="w-full sm:w-auto border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <option value="ph">pH</option>
+                <option value="suhu">Suhu</option>
+                <option value="tds">Kelembapan</option>
             </select>
         </div>
 
