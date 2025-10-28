@@ -103,7 +103,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
             <!-- Card pH -->
             <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
-                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Tanah</span>
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Sensor 1</span>
                 <div id="ph" class="text-3xl sm:text-2xl font-bold">-</div>
                 <div class="text-xs text-gray-500 mt-1">Optimal: 6.0 - 7.5</div>
                 <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
@@ -111,8 +111,39 @@
                 </div>
                 <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
             </div>
+        
+            <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Sensor 2</span>
+                <div id="ph" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1">Optimal: 6.0 - 7.5</div>
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+                    <div id="ph-bar" class="h-full w-0 transition-all duration-500"></div>
+                </div>
+                <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
+            </div>
+
+            <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Sensor 3</span>
+                <div id="ph" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1">Optimal: 6.0 - 7.5</div>
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+                    <div id="ph-bar" class="h-full w-0 transition-all duration-500"></div>
+                </div>
+                <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
+            </div>
+
+            <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
+                <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">pH Sensor 4</span>
+                <div id="ph" class="text-3xl sm:text-2xl font-bold">-</div>
+                <div class="text-xs text-gray-500 mt-1">Optimal: 6.0 - 7.5</div>
+                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+                    <div id="ph-bar" class="h-full w-0 transition-all duration-500"></div>
+                </div>
+                <div id="ph-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
+            </div>
+        
             <!-- Card Suhu -->
-            <div class="p-4 sm:p-3 bg-orange-50 rounded-lg flex flex-col items-center">
+            <!-- <div class="p-4 sm:p-3 bg-orange-50 rounded-lg flex flex-col items-center">
                 <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Suhu Tanah</span>
                 <div id="suhu" class="text-3xl sm:text-2xl font-bold">-</div>
                 <div class="text-xs text-gray-500 mt-1">Optimal: 22°C - 30°C</div>
@@ -120,9 +151,9 @@
                     <div id="suhu-bar" class="h-full w-0 transition-all duration-500"></div>
                 </div>
                 <div id="suhu-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
-            </div>
+            </div> -->
             <!-- Card TDS -->
-            <div class="p-4 sm:p-3 bg-amber-50 rounded-lg flex flex-col items-center">
+            <!-- <div class="p-4 sm:p-3 bg-amber-50 rounded-lg flex flex-col items-center">
                 <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Kelembapan Tanah</span>
                 <div id="tds" class="text-3xl sm:text-2xl font-bold">-</div>
                 <div class="text-xs text-gray-500 mt-1">Optimal: 20% - 80%</div>
@@ -130,7 +161,7 @@
                     <div id="tds-bar" class="h-full w-0 transition-all duration-500"></div>
                 </div>
                 <div id="tds-status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
-            </div>
+            </div> -->
 <!--    <script>-->
 <!--   function updateTdsDisplay(tdsValue) {-->
 <!--    const tdsDisplay = document.getElementById('tds');-->
