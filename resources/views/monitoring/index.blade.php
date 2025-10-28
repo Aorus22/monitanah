@@ -258,7 +258,7 @@
             </div>
         </div>
 
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        <!-- <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
     <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 sm:mb-6">Riwayat Semprotan Pompa pH</h2>
 
     <div class="overflow-x-auto bg-white shadow rounded-lg -mx-4 sm:mx-0">
@@ -345,7 +345,7 @@
     <div class="mt-4 sm:mt-6 px-4 sm:px-0">
         {{ $logsppm->links('pagination::tailwind') }}
     </div>
-</div>
+</div> -->
 
         <!-- Footer -->
         <footer class="text-center py-6 text-gray-500 text-sm border-t mt-10">
