@@ -343,9 +343,9 @@
 
     {{-- Pagination --}}
     <div class="mt-4 sm:mt-6 px-4 sm:px-0">
-        {{ $logsppm->links('pagination::tailwind') }}
-    </div>
-</div> -->
+        <!-- {{ $logsppm->links('pagination::tailwind') }} -->
+    <!-- </div>
+</div> --> -->
 
         <!-- Footer -->
         <footer class="text-center py-6 text-gray-500 text-sm border-t mt-10">
