@@ -21,6 +21,7 @@ class AquaponicController extends Controller
     public function updateRealtime(Request $request)
     {
         $request->validate([
+            'id' => 'required|integer',               
             'ph' => 'required|numeric',
             'suhu' => 'required|numeric',
             'tds' => 'required|numeric',
@@ -29,7 +30,8 @@ class AquaponicController extends Controller
         ]);
 
         // Update baris dengan ID 1
-        $sensorData = SensorData::find(1);
+        $sensorData = SensorData::find($request->id);
+        
         if ($sensorData) {
             $sensorData->update([
                 'ph' => $request->ph,
@@ -40,6 +42,7 @@ class AquaponicController extends Controller
             ]);
         } else {
             SensorData::create([
+                'id' => $request->id,
                 'ph' => $request->ph,
                 'suhu' => $request->suhu,
                 'tds' => $request->tds,
