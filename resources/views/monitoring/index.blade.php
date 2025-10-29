@@ -99,7 +99,7 @@
             </select>
         </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <!-- Card pH -->
             <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
                 <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Sensor 1</span>
