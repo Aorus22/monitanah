@@ -99,7 +99,7 @@
             </select>
         </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+    <div id="sensorContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
             <!-- Card pH -->
             <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
                 <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Sensor 1</span>
@@ -312,6 +312,8 @@ let lastPhCondition = 'normal';
 let lastTempCondition = 'normal'; // <-- ❗ Wajib tambahkan ini
 let lastTdsCondition = 'normal';
 
+let currentType = 'ph'; // default tampilan pH
+        
 // Event listener untuk dropdown sensor
 document.addEventListener('DOMContentLoaded', () => {
     const sensorDropdown = document.getElementById('sensorDropdown');
@@ -355,26 +357,38 @@ function formatDateTime(dateString) {
     });
 }
 
-// Ambil data realtime terbaru dari API dengan penanganan error
+// Ambil data realtime semua node NEWWWW
 async function fetchRealtimeData() {
-    const loader = document.getElementById('realtime-loader');
-    const errorElement = document.getElementById('realtime-error');
-
-    loader.style.display = 'block';
-    errorElement.classList.add('hidden');
-
-    try {
-        const res = await fetch(`api/sensor/realtime?sensor_id=${selectedSensorId}`);
-        if (!res.ok) throw new Error('Response not OK');
-        return await res.json();
-    } catch (error) {
-        console.error('Error fetching realtime data:', error);
-        errorElement.classList.remove('hidden');
-        return null;
-    } finally {
-        loader.style.display = 'none';
-    }
+  try {
+    const res = await fetch('/api/sensor/realtime');
+    if (!res.ok) throw new Error('Gagal ambil data');
+    return await res.json(); // hasilnya array
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
 }
+
+// // Ambil data realtime terbaru dari API dengan penanganan error
+// async function fetchRealtimeData() {
+//     const loader = document.getElementById('realtime-loader');
+//     const errorElement = document.getElementById('realtime-error');
+
+//     loader.style.display = 'block';
+//     errorElement.classList.add('hidden');
+
+//     try {
+//         const res = await fetch(`api/sensor/realtime?sensor_id=${selectedSensorId}`);
+//         if (!res.ok) throw new Error('Response not OK');
+//         return await res.json();
+//     } catch (error) {
+//         console.error('Error fetching realtime data:', error);
+//         errorElement.classList.remove('hidden');
+//         return null;
+//     } finally {
+//         loader.style.display = 'none';
+//     }
+// }
 
 // Fungsi untuk menandai tindakan selesai
 function markActionComplete() {
@@ -410,387 +424,434 @@ function markActionComplete() {
     }, 3000);
 }
 
-// Update tampilan realtime dari data
+// Update tampilan semua sensor sesuai tipe
 async function updateRealtimeSection() {
-    const data = await fetchRealtimeData();
-    const sensorIdElement = document.getElementById('sensor_id');
-    sensorIdElement.textContent = selectedSensorId || '-';
+  const sensors = await fetchRealtimeData();
+  if (!sensors) return;
 
-    if (!data) return;
+  sensors.forEach(sensor => {
+    const id = sensor.id;
+    const value = sensor[currentType]; // ambil ph/suhu/tds sesuai dropdown
+    const elemValue = document.getElementById(`sensor-value-${id}`);
+    const elemBar = document.getElementById(`sensor-bar-${id}`);
+    const elemStatus = document.getElementById(`sensor-status-${id}`);
+    const elemRange = document.getElementById(`sensor-range-${id}`);
 
-    sensorIdElement.textContent = (data && (data.sensor_id || data.id)) || selectedSensorId || '-';
-    document.getElementById('ph').textContent = data.ph || '-';
-    document.getElementById('suhu').textContent = data.suhu ? `${data.suhu}°C` : '-';
-    document.getElementById('tds').textContent = data.tds || '-';
+    if (!elemValue) return;
 
+    // Isi nilai
+    elemValue.textContent = currentType === 'suhu' ? `${value.toFixed(1)}°C` : value.toFixed(2);
 
-    //Display Ph
-    const phVal = parseFloat(data.ph);
-    const phDisplay = document.getElementById('ph');
-    const phBar = document.getElementById('ph-bar');
-    const phStatus = document.getElementById('ph-status');
-
-    if (!isNaN(phVal)) {
-        phDisplay.textContent = phVal.toFixed(2);
-        phDisplay.classList.remove('text-green-600', 'text-yellow-500', 'text-red-700');
-
-        if (phVal < 6) {
-            phDisplay.classList.add('text-red-700');
-            phBar.style.width = '33%';
-            phBar.style.backgroundColor = '#de2121';
-            phStatus.textContent = 'Terlalu rendah';
-            if (lastPhCondition !== 'low') {
-                showActionGuide(phVal, 'low');
-                lastPhCondition = 'low';
-            }
-        } else {
-            phDisplay.classList.add('text-green-600');
-            phBar.style.width = '100%';
-            phBar.style.backgroundColor = '#0ee697';
-            phStatus.textContent = 'Optimal';
-            lastPhCondition = 'normal';
-            isNoteShown = false;
-        }
+    // Tampilan bar dan status tergantung jenis sensor
+    if (currentType === 'ph') {
+      elemRange.textContent = 'Optimal: 6.0 - 7.5';
+      elemBar.style.width = `${Math.min(Math.max(((value - 4) / 4) * 100, 0), 100)}%`;
+      elemBar.style.backgroundColor = value >= 6 && value <= 7.5 ? '#34d399' : '#f87171';
+      elemStatus.textContent = value < 6 ? 'Asam' : value > 7.5 ? 'Basa' : 'Optimal';
+    } 
+    else if (currentType === 'suhu') {
+      elemRange.textContent = 'Ideal: 20°C - 30°C';
+      elemBar.style.width = `${Math.min(Math.max(((value - 10) / 30) * 100, 0), 100)}%`;
+      elemBar.style.backgroundColor = value >= 20 && value <= 30 ? '#34d399' : '#fbbf24';
+      elemStatus.textContent = value < 20 ? 'Terlalu Dingin' : value > 30 ? 'Terlalu Panas' : 'Ideal';
+    } 
+    else if (currentType === 'tds') {
+      elemRange.textContent = 'Ideal: 40% - 80%';
+      elemBar.style.width = `${Math.min(Math.max(value, 0), 100)}%`;
+      elemBar.style.backgroundColor = value >= 40 && value <= 80 ? '#34d399' : '#f87171';
+      elemStatus.textContent = value < 40 ? 'Kering' : value > 80 ? 'Jenuh Air' : 'Ideal';
     }
-
-    //Display Suhu
-    const suhuVal = parseFloat(data.suhu);
-    const suhuDisplay = document.getElementById('suhu');
-    const suhuBar = document.getElementById('suhu-bar');
-    const suhuStatus = document.getElementById('suhu-status');
-
-    if (!isNaN(suhuVal)) {
-        suhuDisplay.textContent = suhuVal.toFixed(1) + '°C';
-
-        if (suhuVal < 22) {
-            suhuBar.style.width = '33%';
-            suhuBar.style.backgroundColor = '#facc15';
-            suhuStatus.textContent = 'Terlalu dingin';
-        } else if (suhuVal <= 30) {
-            suhuBar.style.width = '66%';
-            suhuBar.style.backgroundColor = '#34d399';
-            suhuStatus.textContent = 'Optimal';
-        } else {
-            suhuBar.style.width = '100%';
-            suhuBar.style.backgroundColor = '#de2121';
-            suhuStatus.textContent = 'Terlalu panas';
-        }
-    }
-
-
-    // Fungsi untuk membuat note box dengan panduan tindakan manual
-    function showActionGuide(phValue, condition) {
-        if (isNoteShown) return; // ❌ Jika sudah pernah muncul, langsung keluar dari fungsi
-        isNoteShown = true;      // ✅ Tandai bahwa modal sudah tampil
-        // Hapus note box sebelumnya jika ada
-        const existingNote = document.querySelector('.ph-action-note');
-        if (existingNote) {
-            existingNote.remove();
-        }
-
-        let noteContent = '';
-        let noteClass = '';
-
-        // if (condition === 'low') {
-        //     noteClass = 'note-warning';
-        //     noteContent = `
-        //         <div class="note-header">
-        //             <span class="note-icon">⚠️</span>
-        //             <h3>pH Terlalu Rendah (${phValue.toFixed(1)})</h3>
-        //         </div>
-        //         <div class="note-body">
-        //             <h4>🔧 Tindakan Manual yang Diperlukan:</h4>
-        //             <ol>
-        //                 <li><strong>Hentikan sistem sementara</strong> - Matikan pompa dan aliran air</li>
-        //                 <li><strong>Tambahkan buffer alkali</strong> - Gunakan sodium bicarbonate (NaHCO₃) atau potassium hydroxide (KOH)</li>
-        //                 <li><strong>Aduk secara manual</strong> - Pastikan distribusi merata selama 10-15 menit</li>
-        //                 <li><strong>Tunggu stabilisasi</strong> - Biarkan selama 30 menit sebelum mengukur ulang</li>
-        //                 <li><strong>Uji kembali pH</strong> - Pastikan berada di range 6.5-7.5</li>
-        //             </ol>
-
-        //             <div class="warning-box">
-        //                 <strong>⚠️ Peringatan:</strong> Tambahkan buffer secara bertahap untuk menghindari perubahan pH yang terlalu drastis!
-        //             </div>
-        //         </div>
-        //     `;
-        // } else if (condition === 'high') {
-        //     noteClass = 'note-danger';
-        //     noteContent = `
-        //         <div class="note-header">
-        //             <span class="note-icon">🚨</span>
-        //             <h3>pH Terlalu Tinggi (${phValue.toFixed(1)})</h3>
-        //         </div>
-        //         <div class="note-body">
-        //             <h4>🚨 Tindakan Manual Darurat:</h4>
-        //             <ol>
-        //                 <li><strong>STOP sistem segera!</strong> - Matikan semua peralatan dan isolasi area</li>
-        //                 <li><strong>Tambahkan asam lemah</strong> - Gunakan asam sitrat atau asam asetat (jangan HCl)</li>
-        //                 <li><strong>Aduk perlahan</strong> - Gunakan alat non-logam, hindari percikan</li>
-        //                 <li><strong>Ventilasi area kerja</strong> - Pastikan sirkulasi udara yang baik</li>
-        //                 <li><strong>Monitor terus-menerus</strong> - Cek pH setiap 15 menit sampai stabil</li>
-        //                 <li><strong>Bilas peralatan</strong> - Bersihkan semua sensor dan peralatan</li>
-        //             </ol>
-
-
-        //         </div>
-        //     `;
-        // }
-
-        // Buat elemen note box
-        // const noteBox = document.createElement('div');
-        // noteBox.className = `ph-action-note ${noteClass}`;
-        // noteBox.innerHTML = `
-        //     <div class="note-container">
-        //         ${noteContent}
-        //         <div class="note-actions">
-
-        //             <button class="btn-secondary" onclick="this.closest('.ph-action-note').remove(); isNoteShown = false;">Tutup</button>
-        //         </div>
-        //     </div>
-        // `;
-
-        // Tambahkan CSS jika belum ada
-        if (!document.querySelector('#action-note-styles')) {
-            const style = document.createElement('style');
-            style.id = 'action-note-styles';
-            style.textContent = `
-                .ph-action-note {
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    max-width: 500px;
-                    max-height: 80vh;
-                    overflow-y: auto;
-                    z-index: 1000;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                    border-radius: 12px;
-                    animation: popIn 0.3s ease-out;
-                }
-
-                .ph-action-note::before {
-                    content: '';
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0, 0, 0, 0.5);
-                    z-index: -1;
-                }
-
-                .note-container {
-                    background: white;
-                    border-radius: 12px;
-                    overflow: hidden;
-                }
-
-                .note-warning {
-                    border-top: 5px solid #f59e0b;
-                }
-
-                .note-danger {
-                    border-top: 5px solid #dc2626;
-                }
-
-                .note-header {
-                    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-                    padding: 20px;
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                    border-bottom: 1px solid #e2e8f0;
-                }
-
-                .note-icon {
-                    font-size: 24px;
-                }
-
-                .note-header h3 {
-                    margin: 0;
-                    color: #1e293b;
-                    font-size: 18px;
-                    font-weight: 600;
-                }
-
-                .note-body {
-                    padding: 25px;
-                }
-
-                .note-body h4 {
-                    color: #374151;
-                    margin: 0 0 15px 0;
-                    font-size: 16px;
-                    font-weight: 600;
-                }
-
-                .note-body ol {
-                    margin: 0 0 20px 0;
-                    padding-left: 20px;
-                }
-
-                .note-body li {
-                    margin-bottom: 8px;
-                    line-height: 1.5;
-                    color: #4b5563;
-                }
-
-                .note-body li strong {
-                    color: #1f2937;
-                }
-
-                .warning-box, .danger-box {
-                    padding: 12px 15px;
-                    border-radius: 8px;
-                    margin-top: 15px;
-                    font-size: 14px;
-                    line-height: 1.4;
-                }
-
-                .warning-box {
-                    background: #fef3c7;
-                    border: 1px solid #f59e0b;
-                    color: #92400e;
-                }
-
-                .danger-box {
-                    background: #fee2e2;
-                    border: 1px solid #dc2626;
-                    color: #991b1b;
-                }
-
-                .note-actions {
-                    padding: 20px;
-                    background: #f8fafc;
-                    display: flex;
-                    gap: 10px;
-                    justify-content: flex-end;
-                    border-top: 1px solid #e2e8f0;
-                }
-
-                .btn-primary, .btn-secondary {
-                    padding: 10px 20px;
-                    border: none;
-                    border-radius: 6px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-
-                .btn-primary {
-                    background: #059669;
-                    color: white;
-                }
-
-                .btn-primary:hover {
-                    background: #047857;
-                }
-
-                .btn-secondary {
-                    background: #e5e7eb;
-                    color: #374151;
-                }
-
-                .btn-secondary:hover {
-                    background: #d1d5db;
-                }
-
-                @keyframes popIn {
-                    from {
-                        transform: translate(-50%, -50%) scale(0.8);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translate(-50%, -50%) scale(1);
-                        opacity: 1;
-                    }
-                }
-
-                @media (max-width: 600px) {
-                    .ph-action-note {
-                        max-width: 90%;
-                        max-height: 90vh;
-                    }
-
-                    .note-actions {
-                        flex-direction: column-reverse;
-                    }
-
-                    .btn-primary, .btn-secondary {
-                        width: 100%;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-
-    // Tambahkan note box ke halaman
-    document.body.appendChild(noteBox);
+  });
 }
 
+// Event listener untuk dropdown
+document.getElementById('sensorType').addEventListener('change', (e) => {
+  currentType = e.target.value;
+  updateRealtimeSection();
+});
 
 
-    // if (!isNaN(tdsVal)) {
-    //     tdsDisplay.textContent = tdsVal.toFixed(0); // Tampilkan angka tanpa desimal
+// Update tampilan realtime dari data
+// async function updateRealtimeSection() {
+//     const data = await fetchRealtimeData();
+//     const sensorIdElement = document.getElementById('sensor_id');
+//     sensorIdElement.textContent = selectedSensorId || '-';
 
-    //     if (tdsVal < 500) {
-    //         tdsDisplay.style.color = '#facc15'; // Kuning – Terlalu rendah
-    //     } else if (tdsVal >= 500 && tdsVal <= 1000) {
-    //         tdsDisplay.style.color = '#16a34a'; // Hijau – Optimal
-    //     } else if (tdsVal > 1000 && tdsVal <= 1500) {
-    //         tdsDisplay.style.color = '#facc15'; // Kuning – Mulai tinggi
-    //     } else {
-    //         tdsDisplay.style.color = '#dc2626'; // Merah – Terlalu tinggi
-    //     }
-    // } else {
-    //     tdsDisplay.textContent = '-';
-    //     tdsDisplay.style.color = '#6b7280'; // Abu-abu
-    // }
+//     if (!data) return;
+
+//     sensorIdElement.textContent = (data && (data.sensor_id || data.id)) || selectedSensorId || '-';
+//     document.getElementById('ph').textContent = data.ph || '-';
+//     document.getElementById('suhu').textContent = data.suhu ? `${data.suhu}°C` : '-';
+//     document.getElementById('tds').textContent = data.tds || '-';
 
 
-    // --- Bar indikator TDS ---
-// --- Display TDS ---
-const tdsVal = parseFloat(data.tds);
-const tdsDisplay = document.getElementById('tds');
-const tdsBar = document.getElementById('tds-bar');
-const tdsStatus = document.getElementById('tds-status');
+//     //Display Ph
+//     const phVal = parseFloat(data.ph);
+//     const phDisplay = document.getElementById('ph');
+//     const phBar = document.getElementById('ph-bar');
+//     const phStatus = document.getElementById('ph-status');
 
-if (!isNaN(tdsVal)) {
-    tdsDisplay.textContent = `${tdsVal.toFixed(0)}%`;
-    tdsDisplay.style.color = '';
+//     if (!isNaN(phVal)) {
+//         phDisplay.textContent = phVal.toFixed(2);
+//         phDisplay.classList.remove('text-green-600', 'text-yellow-500', 'text-red-700');
 
-    if (tdsVal < 20) {
-        tdsDisplay.style.color = '#facc15'; // Kuning
-        tdsBar.style.width = '33%';
-        tdsBar.style.backgroundColor = '#facc15';
-        tdsStatus.textContent = 'Terlalu rendah';
+//         if (phVal < 6) {
+//             phDisplay.classList.add('text-red-700');
+//             phBar.style.width = '33%';
+//             phBar.style.backgroundColor = '#de2121';
+//             phStatus.textContent = 'Terlalu rendah';
+//             if (lastPhCondition !== 'low') {
+//                 showActionGuide(phVal, 'low');
+//                 lastPhCondition = 'low';
+//             }
+//         } else {
+//             phDisplay.classList.add('text-green-600');
+//             phBar.style.width = '100%';
+//             phBar.style.backgroundColor = '#0ee697';
+//             phStatus.textContent = 'Optimal';
+//             lastPhCondition = 'normal';
+//             isNoteShown = false;
+//         }
+//     }
 
-        if (lastTdsCondition !== 'low') {
-            showTdsActionGuide(tdsVal, 'low');
-            lastTdsCondition = 'low';
-        }
+//     //Display Suhu
+//     const suhuVal = parseFloat(data.suhu);
+//     const suhuDisplay = document.getElementById('suhu');
+//     const suhuBar = document.getElementById('suhu-bar');
+//     const suhuStatus = document.getElementById('suhu-status');
 
-    } else if (tdsVal <= 80) {
-        tdsDisplay.style.color = '#16a34a'; // Hijau
-        tdsBar.style.width = '66%';
-        tdsBar.style.backgroundColor = '#34d399';
-        tdsStatus.textContent = 'Optimal';
+//     if (!isNaN(suhuVal)) {
+//         suhuDisplay.textContent = suhuVal.toFixed(1) + '°C';
 
-        lastTdsCondition = 'normal';
-        isTdsNoteShown = false;
+//         if (suhuVal < 22) {
+//             suhuBar.style.width = '33%';
+//             suhuBar.style.backgroundColor = '#facc15';
+//             suhuStatus.textContent = 'Terlalu dingin';
+//         } else if (suhuVal <= 30) {
+//             suhuBar.style.width = '66%';
+//             suhuBar.style.backgroundColor = '#34d399';
+//             suhuStatus.textContent = 'Optimal';
+//         } else {
+//             suhuBar.style.width = '100%';
+//             suhuBar.style.backgroundColor = '#de2121';
+//             suhuStatus.textContent = 'Terlalu panas';
+//         }
+//     }
 
-    } else {
-        tdsDisplay.style.color = '#dc2626'; // Merah
-        tdsBar.style.width = '100%';
-        tdsBar.style.backgroundColor = '#de2121';
-        tdsStatus.textContent = 'Berlebihan';
 
-        if (lastTdsCondition !== 'high') {
-            showTdsActionGuide(tdsVal, 'high');
-            lastTdsCondition = 'high';
-        }
-    }
-}
+//     // Fungsi untuk membuat note box dengan panduan tindakan manual
+//     function showActionGuide(phValue, condition) {
+//         if (isNoteShown) return; // ❌ Jika sudah pernah muncul, langsung keluar dari fungsi
+//         isNoteShown = true;      // ✅ Tandai bahwa modal sudah tampil
+//         // Hapus note box sebelumnya jika ada
+//         const existingNote = document.querySelector('.ph-action-note');
+//         if (existingNote) {
+//             existingNote.remove();
+//         }
+
+//         let noteContent = '';
+//         let noteClass = '';
+
+//         // if (condition === 'low') {
+//         //     noteClass = 'note-warning';
+//         //     noteContent = `
+//         //         <div class="note-header">
+//         //             <span class="note-icon">⚠️</span>
+//         //             <h3>pH Terlalu Rendah (${phValue.toFixed(1)})</h3>
+//         //         </div>
+//         //         <div class="note-body">
+//         //             <h4>🔧 Tindakan Manual yang Diperlukan:</h4>
+//         //             <ol>
+//         //                 <li><strong>Hentikan sistem sementara</strong> - Matikan pompa dan aliran air</li>
+//         //                 <li><strong>Tambahkan buffer alkali</strong> - Gunakan sodium bicarbonate (NaHCO₃) atau potassium hydroxide (KOH)</li>
+//         //                 <li><strong>Aduk secara manual</strong> - Pastikan distribusi merata selama 10-15 menit</li>
+//         //                 <li><strong>Tunggu stabilisasi</strong> - Biarkan selama 30 menit sebelum mengukur ulang</li>
+//         //                 <li><strong>Uji kembali pH</strong> - Pastikan berada di range 6.5-7.5</li>
+//         //             </ol>
+
+//         //             <div class="warning-box">
+//         //                 <strong>⚠️ Peringatan:</strong> Tambahkan buffer secara bertahap untuk menghindari perubahan pH yang terlalu drastis!
+//         //             </div>
+//         //         </div>
+//         //     `;
+//         // } else if (condition === 'high') {
+//         //     noteClass = 'note-danger';
+//         //     noteContent = `
+//         //         <div class="note-header">
+//         //             <span class="note-icon">🚨</span>
+//         //             <h3>pH Terlalu Tinggi (${phValue.toFixed(1)})</h3>
+//         //         </div>
+//         //         <div class="note-body">
+//         //             <h4>🚨 Tindakan Manual Darurat:</h4>
+//         //             <ol>
+//         //                 <li><strong>STOP sistem segera!</strong> - Matikan semua peralatan dan isolasi area</li>
+//         //                 <li><strong>Tambahkan asam lemah</strong> - Gunakan asam sitrat atau asam asetat (jangan HCl)</li>
+//         //                 <li><strong>Aduk perlahan</strong> - Gunakan alat non-logam, hindari percikan</li>
+//         //                 <li><strong>Ventilasi area kerja</strong> - Pastikan sirkulasi udara yang baik</li>
+//         //                 <li><strong>Monitor terus-menerus</strong> - Cek pH setiap 15 menit sampai stabil</li>
+//         //                 <li><strong>Bilas peralatan</strong> - Bersihkan semua sensor dan peralatan</li>
+//         //             </ol>
+
+
+//         //         </div>
+//         //     `;
+//         // }
+
+//         // Buat elemen note box
+//         // const noteBox = document.createElement('div');
+//         // noteBox.className = `ph-action-note ${noteClass}`;
+//         // noteBox.innerHTML = `
+//         //     <div class="note-container">
+//         //         ${noteContent}
+//         //         <div class="note-actions">
+
+//         //             <button class="btn-secondary" onclick="this.closest('.ph-action-note').remove(); isNoteShown = false;">Tutup</button>
+//         //         </div>
+//         //     </div>
+//         // `;
+
+//         // Tambahkan CSS jika belum ada
+//         if (!document.querySelector('#action-note-styles')) {
+//             const style = document.createElement('style');
+//             style.id = 'action-note-styles';
+//             style.textContent = `
+//                 .ph-action-note {
+//                     position: fixed;
+//                     top: 50%;
+//                     left: 50%;
+//                     transform: translate(-50%, -50%);
+//                     max-width: 500px;
+//                     max-height: 80vh;
+//                     overflow-y: auto;
+//                     z-index: 1000;
+//                     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+//                     border-radius: 12px;
+//                     animation: popIn 0.3s ease-out;
+//                 }
+
+//                 .ph-action-note::before {
+//                     content: '';
+//                     position: fixed;
+//                     top: 0;
+//                     left: 0;
+//                     width: 100%;
+//                     height: 100%;
+//                     background: rgba(0, 0, 0, 0.5);
+//                     z-index: -1;
+//                 }
+
+//                 .note-container {
+//                     background: white;
+//                     border-radius: 12px;
+//                     overflow: hidden;
+//                 }
+
+//                 .note-warning {
+//                     border-top: 5px solid #f59e0b;
+//                 }
+
+//                 .note-danger {
+//                     border-top: 5px solid #dc2626;
+//                 }
+
+//                 .note-header {
+//                     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+//                     padding: 20px;
+//                     display: flex;
+//                     align-items: center;
+//                     gap: 15px;
+//                     border-bottom: 1px solid #e2e8f0;
+//                 }
+
+//                 .note-icon {
+//                     font-size: 24px;
+//                 }
+
+//                 .note-header h3 {
+//                     margin: 0;
+//                     color: #1e293b;
+//                     font-size: 18px;
+//                     font-weight: 600;
+//                 }
+
+//                 .note-body {
+//                     padding: 25px;
+//                 }
+
+//                 .note-body h4 {
+//                     color: #374151;
+//                     margin: 0 0 15px 0;
+//                     font-size: 16px;
+//                     font-weight: 600;
+//                 }
+
+//                 .note-body ol {
+//                     margin: 0 0 20px 0;
+//                     padding-left: 20px;
+//                 }
+
+//                 .note-body li {
+//                     margin-bottom: 8px;
+//                     line-height: 1.5;
+//                     color: #4b5563;
+//                 }
+
+//                 .note-body li strong {
+//                     color: #1f2937;
+//                 }
+
+//                 .warning-box, .danger-box {
+//                     padding: 12px 15px;
+//                     border-radius: 8px;
+//                     margin-top: 15px;
+//                     font-size: 14px;
+//                     line-height: 1.4;
+//                 }
+
+//                 .warning-box {
+//                     background: #fef3c7;
+//                     border: 1px solid #f59e0b;
+//                     color: #92400e;
+//                 }
+
+//                 .danger-box {
+//                     background: #fee2e2;
+//                     border: 1px solid #dc2626;
+//                     color: #991b1b;
+//                 }
+
+//                 .note-actions {
+//                     padding: 20px;
+//                     background: #f8fafc;
+//                     display: flex;
+//                     gap: 10px;
+//                     justify-content: flex-end;
+//                     border-top: 1px solid #e2e8f0;
+//                 }
+
+//                 .btn-primary, .btn-secondary {
+//                     padding: 10px 20px;
+//                     border: none;
+//                     border-radius: 6px;
+//                     font-weight: 500;
+//                     cursor: pointer;
+//                     transition: all 0.2s;
+//                 }
+
+//                 .btn-primary {
+//                     background: #059669;
+//                     color: white;
+//                 }
+
+//                 .btn-primary:hover {
+//                     background: #047857;
+//                 }
+
+//                 .btn-secondary {
+//                     background: #e5e7eb;
+//                     color: #374151;
+//                 }
+
+//                 .btn-secondary:hover {
+//                     background: #d1d5db;
+//                 }
+
+//                 @keyframes popIn {
+//                     from {
+//                         transform: translate(-50%, -50%) scale(0.8);
+//                         opacity: 0;
+//                     }
+//                     to {
+//                         transform: translate(-50%, -50%) scale(1);
+//                         opacity: 1;
+//                     }
+//                 }
+
+//                 @media (max-width: 600px) {
+//                     .ph-action-note {
+//                         max-width: 90%;
+//                         max-height: 90vh;
+//                     }
+
+//                     .note-actions {
+//                         flex-direction: column-reverse;
+//                     }
+
+//                     .btn-primary, .btn-secondary {
+//                         width: 100%;
+//                     }
+//                 }
+//             `;
+//             document.head.appendChild(style);
+//         }
+
+//     // Tambahkan note box ke halaman
+//     document.body.appendChild(noteBox);
+// }
+
+
+
+//     // if (!isNaN(tdsVal)) {
+//     //     tdsDisplay.textContent = tdsVal.toFixed(0); // Tampilkan angka tanpa desimal
+
+//     //     if (tdsVal < 500) {
+//     //         tdsDisplay.style.color = '#facc15'; // Kuning – Terlalu rendah
+//     //     } else if (tdsVal >= 500 && tdsVal <= 1000) {
+//     //         tdsDisplay.style.color = '#16a34a'; // Hijau – Optimal
+//     //     } else if (tdsVal > 1000 && tdsVal <= 1500) {
+//     //         tdsDisplay.style.color = '#facc15'; // Kuning – Mulai tinggi
+//     //     } else {
+//     //         tdsDisplay.style.color = '#dc2626'; // Merah – Terlalu tinggi
+//     //     }
+//     // } else {
+//     //     tdsDisplay.textContent = '-';
+//     //     tdsDisplay.style.color = '#6b7280'; // Abu-abu
+//     // }
+
+
+//     // --- Bar indikator TDS ---
+// // --- Display TDS ---
+// const tdsVal = parseFloat(data.tds);
+// const tdsDisplay = document.getElementById('tds');
+// const tdsBar = document.getElementById('tds-bar');
+// const tdsStatus = document.getElementById('tds-status');
+
+// if (!isNaN(tdsVal)) {
+//     tdsDisplay.textContent = `${tdsVal.toFixed(0)}%`;
+//     tdsDisplay.style.color = '';
+
+//     if (tdsVal < 20) {
+//         tdsDisplay.style.color = '#facc15'; // Kuning
+//         tdsBar.style.width = '33%';
+//         tdsBar.style.backgroundColor = '#facc15';
+//         tdsStatus.textContent = 'Terlalu rendah';
+
+//         if (lastTdsCondition !== 'low') {
+//             showTdsActionGuide(tdsVal, 'low');
+//             lastTdsCondition = 'low';
+//         }
+
+//     } else if (tdsVal <= 80) {
+//         tdsDisplay.style.color = '#16a34a'; // Hijau
+//         tdsBar.style.width = '66%';
+//         tdsBar.style.backgroundColor = '#34d399';
+//         tdsStatus.textContent = 'Optimal';
+
+//         lastTdsCondition = 'normal';
+//         isTdsNoteShown = false;
+
+//     } else {
+//         tdsDisplay.style.color = '#dc2626'; // Merah
+//         tdsBar.style.width = '100%';
+//         tdsBar.style.backgroundColor = '#de2121';
+//         tdsStatus.textContent = 'Berlebihan';
+
+//         if (lastTdsCondition !== 'high') {
+//             showTdsActionGuide(tdsVal, 'high');
+//             lastTdsCondition = 'high';
+//         }
+//     }
+// }
 
 function showTdsActionGuide(tdsValue, condition) {
   if (isTdsNoteShown) return;
@@ -1169,10 +1230,14 @@ function showTempActionGuide(tempValue, condition) {
             }
         });
 
-        // Update data realtime setiap 10 menit (600000 ms)
-        setInterval(() => {
-            updateRealtimeSection();
-        }, 600000);
+        // // Update data realtime setiap 10 menit (600000 ms)
+        // setInterval(() => {
+        //     updateRealtimeSection();
+        // }, 600000);
+
+        // Refresh tiap 5 detik
+        setInterval(updateRealtimeSection, 5000);
+        updateRealtimeSection();
 
         // Update data log/history setiap 1 hari (86400000 ms)
         setInterval(() => {
