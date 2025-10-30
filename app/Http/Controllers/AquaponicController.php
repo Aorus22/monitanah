@@ -53,7 +53,7 @@ class AquaponicController extends Controller
 
         return response()->json([
             'message' => 'Realtime data updated',
-            'id' => 1,
+            'id' => $request->id,
         ], 200);
     }
     /**
