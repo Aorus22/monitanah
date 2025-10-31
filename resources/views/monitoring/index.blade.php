@@ -98,6 +98,7 @@
                 <option value="3">3</option>
                 <option value="4">4</option>
             </select>
+
         </div>
 
     <div id="sensorContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -111,7 +112,7 @@
                 </div>
                 <div id="sensor-status-1" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
             </div>
-        
+
             <div class="p-4 sm:p-3 bg-emerald-50 rounded-lg flex flex-col items-center">
                 <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Sensor 2</span>
                 <div id="sensor-value-2" class="text-3xl sm:text-2xl font-bold">-</div>
@@ -151,7 +152,7 @@
                 </div>
                 <div id="ph_status" class="text-xs font-medium mt-1 text-gray-600 italic">-</div>
             </div>
-        
+
             <!-- Card Suhu -->
             <div class="p-4 sm:p-3 bg-orange-50 rounded-lg flex flex-col items-center">
                 <span class="font-medium text-gray-600 mb-1 text-sm sm:text-base">Suhu Tanah</span>
@@ -253,6 +254,12 @@
                     <i class="fas fa-microchip text-gray-500"></i>
                 </div>
                 <div id="sensor_id" class="text-xl font-mono font-bold mt-2 text-gray-700">-</div>
+                <!-- Centered Save Snapshot button below the ID -->
+                <div class="mt-3 flex justify-center">
+                    <button id="saveSnapshotBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-3 rounded-lg shadow transition-all duration-200">
+                        <i class="fas fa-save mr-2"></i>Simpan Snapshot
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -324,7 +331,7 @@ let lastTempCondition = 'normal'; // <-- ❗ Wajib tambahkan ini
 let lastTdsCondition = 'normal';
 
 let currentType = 'ph'; // default tampilan pH
-        
+
 // Event listener untuk dropdown sensor
 document.addEventListener('DOMContentLoaded', () => {
     const sensorDropdown = document.getElementById('sensorDropdown');
@@ -338,9 +345,28 @@ document.addEventListener('DOMContentLoaded', () => {
         updateHistoryCharts();
     });
 
-    // Initial load
+    // Initial load (history charts are initialized later — updateHistoryCharts
+    // will be called after Chart.js charts are created to avoid referencing
+    // chart variables before declaration.)
     updateRealtimeSection();
-    updateHistoryCharts();
+
+    // Attach save snapshot button handler if present
+    const saveBtn = document.getElementById('saveSnapshotBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            try {
+                await saveSnapshot();
+            } catch (err) {
+                console.error('Failed to save snapshot', err);
+                showToast('Gagal menyimpan snapshot', true);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Snapshot';
+            }
+        });
+    }
 });
 
 // Fungsi untuk format waktu
@@ -389,7 +415,7 @@ async function fetchRealtimeData() {
     errorElement.classList.add('hidden');
 
     try {
-        const res = await fetch(`api/sensor/realtime?sensor_id=${selectedSensorId}`);
+        const res = await fetch(`/api/sensor/realtime?sensor_id=${selectedSensorId}`);
         if (!res.ok) throw new Error('Response not OK');
         return await res.json();
     } catch (error) {
@@ -459,13 +485,13 @@ function markActionComplete() {
 //       elemBar.style.width = `${Math.min(Math.max(((value - 4) / 4) * 100, 0), 100)}%`;
 //       elemBar.style.backgroundColor = value >= 6 && value <= 7.5 ? '#34d399' : '#f87171';
 //       elemStatus.textContent = value < 6 ? 'Asam' : value > 7.5 ? 'Basa' : 'Optimal';
-//     } 
+//     }
 //     else if (currentType === 'suhu') {
 //       elemRange.textContent = 'Ideal: 20°C - 30°C';
 //       elemBar.style.width = `${Math.min(Math.max(((value - 10) / 30) * 100, 0), 100)}%`;
 //       elemBar.style.backgroundColor = value >= 20 && value <= 30 ? '#34d399' : '#fbbf24';
 //       elemStatus.textContent = value < 20 ? 'Terlalu Dingin' : value > 30 ? 'Terlalu Panas' : 'Ideal';
-//     } 
+//     }
 //     else if (currentType === 'tds') {
 //       elemRange.textContent = 'Ideal: 40% - 80%';
 //       elemBar.style.width = `${Math.min(Math.max(value, 0), 100)}%`;
@@ -475,25 +501,35 @@ function markActionComplete() {
 //   });
 // }
 
-// Event listener untuk dropdown
-document.getElementById('sensorType').addEventListener('change', (e) => {
-  currentType = e.target.value;
-  updateRealtimeSection();
-});
+// NOTE: the dropdown id used in the template is `sensorDropdown`.
+// The earlier code referenced `sensorType` which does not exist and caused
+// "Cannot read properties of null (reading 'addEventListener')" errors.
+// The sensor dropdown is already handled inside DOMContentLoaded above,
+// so we no longer need this extra listener.
 
 
 // Update tampilan realtime dari data
 async function updateRealtimeSection() {
     const data = await fetchRealtimeData();
     const sensorIdElement = document.getElementById('sensor_id');
-    sensorIdElement.textContent = selectedSensorId || '-';
+    if (sensorIdElement) {
+        sensorIdElement.textContent = selectedSensorId || '-';
+    } else {
+        console.warn('updateRealtimeSection: element #sensor_id not found');
+    }
 
     if (!data) return;
 
-    sensorIdElement.textContent = (data && (data.sensor_id || data.id)) || selectedSensorId || '-';
-    document.getElementById('ph').textContent = data.ph || '-';
-    document.getElementById('suhu').textContent = data.suhu ? `${data.suhu}°C` : '-';
-    document.getElementById('tds').textContent = data.tds || '-';
+    if (sensorIdElement) {
+        sensorIdElement.textContent = (data && (data.sensor_id || data.id)) || selectedSensorId || '-';
+    }
+    const phElem = document.getElementById('ph');
+    const suhuElem = document.getElementById('suhu');
+    const tdsElem = document.getElementById('tds');
+
+    if (phElem) phElem.textContent = (data && data.ph) != null ? data.ph : '-';
+    if (suhuElem) suhuElem.textContent = (data && data.suhu) != null ? `${data.suhu}°C` : '-';
+    if (tdsElem) tdsElem.textContent = (data && data.tds) != null ? data.tds : '-';
 
 
     //Display Ph
@@ -797,7 +833,27 @@ async function updateRealtimeSection() {
         }
 
     // Tambahkan note box ke halaman
-    document.body.appendChild(noteBox);
+    // Append noteBox if it exists; if the more detailed noteBox creation
+    // was accidentally commented out, create a lightweight fallback so the
+    // app doesn't crash when showActionGuide() is called.
+    if (typeof noteBox !== 'undefined') {
+        document.body.appendChild(noteBox);
+    } else {
+        const fallback = document.createElement('div');
+        fallback.className = 'ph-action-note';
+        fallback.innerHTML = `
+            <div class="note-container">
+                <div class="note-body">
+                    <h3 class="text-lg font-semibold">Peringatan pH</h3>
+                    <p class="text-sm">Nilai pH: ${phValue}</p>
+                    <div class="note-actions">
+                        <button class="btn-secondary" onclick="this.closest('.ph-action-note').remove(); isNoteShown = false;">Tutup</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(fallback);
+    }
 }
 
 
@@ -1050,8 +1106,7 @@ function showTempActionGuide(tempValue, condition) {
                 return await res.json();
             } catch (error) {
                 console.error('Error fetching history data:', error);
-                errorElement.classList.remove('hidden');
-                return [];
+                return null;
             } finally {
                 loader.style.display = 'none';
             }
@@ -1060,7 +1115,67 @@ function showTempActionGuide(tempValue, condition) {
         // Update grafik riwayat
         async function updateHistoryCharts() {
             const history = await fetchHistory();
-            if (history.length === 0) return;
+
+            const chartError = document.getElementById('chart-error');
+
+            // Distinguish between network/error (history === null) and empty-but-valid data ([])
+            if (history === null) {
+                // Network or server error while fetching
+                if (chartError) {
+                    chartError.classList.remove('hidden');
+                    // Make it look like an error
+                    chartError.classList.remove('text-gray-600');
+                    chartError.classList.add('text-red-500');
+                    chartError.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i><span>Gagal mengambil data history. Periksa koneksi atau server.</span>';
+                }
+                // Clear charts to avoid stale data
+                if (phChart) {
+                    phChart.data.labels = [];
+                    phChart.data.datasets[0].data = [];
+                    phChart.update();
+                }
+                if (suhuChart) {
+                    suhuChart.data.labels = [];
+                    suhuChart.data.datasets[0].data = [];
+                    suhuChart.update();
+                }
+                if (tdsChart) {
+                    tdsChart.data.labels = [];
+                    tdsChart.data.datasets[0].data = [];
+                    tdsChart.update();
+                }
+                return;
+            }
+
+            if (history.length === 0) {
+                // Valid response but no entries for this sensor
+                if (chartError) {
+                    chartError.classList.remove('hidden');
+                    // Informational style (not error)
+                    chartError.classList.remove('text-red-500');
+                    chartError.classList.add('text-gray-600');
+                    chartError.innerHTML = '<i class="fas fa-info-circle mr-2"></i><span>Tidak ada data history untuk sensor ' + selectedSensorId + '.</span>';
+                }
+                // Clear charts
+                if (phChart) {
+                    phChart.data.labels = [];
+                    phChart.data.datasets[0].data = [];
+                    phChart.update();
+                }
+                if (suhuChart) {
+                    suhuChart.data.labels = [];
+                    suhuChart.data.datasets[0].data = [];
+                    suhuChart.update();
+                }
+                if (tdsChart) {
+                    tdsChart.data.labels = [];
+                    tdsChart.data.datasets[0].data = [];
+                    tdsChart.update();
+                }
+                return;
+            }
+
+            if (chartError) chartError.classList.add('hidden');
 
             const labels = history.map(d => formatTime(d.created_at));
 
@@ -1240,6 +1355,72 @@ function showTempActionGuide(tempValue, condition) {
                 }
             }
         });
+
+    // Populate history charts once charts are initialized
+    updateHistoryCharts();
+
+        // Function to show a small toast notification
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: ${isError ? '#ef4444' : '#10b981'};
+                color: white;
+                padding: 10px 16px;
+                border-radius: 8px;
+                box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+                z-index: 1100;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Save current realtime snapshot to history API
+        async function saveSnapshot() {
+            // Prefer fetching the latest realtime data to ensure accuracy
+            const data = await fetchRealtimeData();
+            if (!data) {
+                showToast('Tidak ada data realtime untuk disimpan', true);
+                return;
+            }
+
+            const payload = {
+                sensor_id: selectedSensorId,
+                ph: data.ph != null ? parseFloat(data.ph) : null,
+                suhu: data.suhu != null ? parseFloat(data.suhu) : null,
+                tds: data.tds != null ? parseFloat(data.tds) : null,
+                status_pump_ph: data.status_pump_ph != null ? Boolean(data.status_pump_ph) : false,
+                status_pump_ppm: data.status_pump_ppm != null ? Boolean(data.status_pump_ppm) : false
+            };
+
+            try {
+                const res = await fetch('/api/sensor/history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    console.error('Save snapshot error:', res.status, text);
+                    showToast('Gagal menyimpan snapshot', true);
+                    return;
+                }
+
+                showToast('Snapshot disimpan');
+                // Refresh history charts to show the new snapshot
+                updateHistoryCharts();
+            } catch (err) {
+                console.error('Network error while saving snapshot', err);
+                showToast('Gagal menyimpan snapshot', true);
+            }
+        }
 
         // // Update data realtime setiap 10 menit (600000 ms)
         // setInterval(() => {
