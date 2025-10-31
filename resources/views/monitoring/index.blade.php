@@ -482,7 +482,7 @@ document.getElementById('sensorType').addEventListener('change', (e) => {
 });
 
 
-Update tampilan realtime dari data
+// Update tampilan realtime dari data
 async function updateRealtimeSection() {
     const data = await fetchRealtimeData();
     const sensorIdElement = document.getElementById('sensor_id');
