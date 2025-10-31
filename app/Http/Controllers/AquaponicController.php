@@ -21,7 +21,8 @@ class AquaponicController extends Controller
     public function updateRealtime(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer',               
+            'sensor_id' => 'sometimes|integer|min:1',
+            'id' => 'sometimes|integer|min:1',
             'ph' => 'required|numeric',
             'suhu' => 'required|numeric',
             'tds' => 'required|numeric',
@@ -29,9 +30,10 @@ class AquaponicController extends Controller
             'status_pump_ppm' => 'required|boolean',
         ]);
 
-        // Update baris dengan ID 1
-        $sensorData = SensorData::find($request->id);
-        
+        $sensorId = $request->input('sensor_id', $request->input('id', 1));
+
+        $sensorData = SensorData::where('sensor_id', $sensorId)->first();
+
         if ($sensorData) {
             $sensorData->update([
                 'ph' => $request->ph,
@@ -42,7 +44,7 @@ class AquaponicController extends Controller
             ]);
         } else {
             SensorData::create([
-                'id' => $request->id,
+                'sensor_id' => $sensorId,
                 'ph' => $request->ph,
                 'suhu' => $request->suhu,
                 'tds' => $request->tds,
@@ -53,7 +55,7 @@ class AquaponicController extends Controller
 
         return response()->json([
             'message' => 'Realtime data updated',
-            'id' => $request->id,
+            'sensor_id' => $sensorId,
         ], 200);
     }
     /**
@@ -63,7 +65,9 @@ class AquaponicController extends Controller
      */
     public function storeHistory(Request $request)
     {
+
         $request->validate([
+            'sensor_id' => 'sometimes|integer|min:1',
             'ph' => 'required|numeric',
             'suhu' => 'required|numeric',
             'tds' => 'required|numeric',
@@ -72,6 +76,7 @@ class AquaponicController extends Controller
         ]);
 
         $history = SensorHistory::create([
+            'sensor_id' => $request->input('sensor_id', 1),
             'ph' => $request->ph,
             'suhu' => $request->suhu,
             'tds' => $request->tds,
@@ -86,10 +91,12 @@ class AquaponicController extends Controller
     }
     public function getHistory()
     {
-        // Ambil 50 data terbaru, bisa kamu ubah sesuai kebutuhan
-        $history = SensorHistory::orderBy('created_at', 'desc')
+        $sensorId = request()->input('sensor_id', 1);
+
+        $history = SensorHistory::where('sensor_id', $sensorId)
+            ->orderBy('created_at', 'desc')
             ->limit(50)
-            ->get(['ph', 'suhu', 'tds', 'created_at']);
+            ->get(['sensor_id', 'ph', 'suhu', 'tds', 'created_at']);
 
         return response()->json($history->reverse()->values()); // reverse biar urut dari lama ke baru
     }
@@ -97,7 +104,7 @@ class AquaponicController extends Controller
     // Mengecek pH dan trigger pompa jika kurang dari 6.3 dan belum 4x
     public function checkPhAndTriggerPump()
     {
-        $latest = SensorData::find(1); // Data realtime terbaru
+    $latest = SensorData::where('sensor_id', 1)->first(); // Data realtime terbaru for sensor 1
 
         if (!$latest) {
             return response()->json(['status' => 'no_data'], 404);
@@ -133,7 +140,7 @@ class AquaponicController extends Controller
     // Status pompa apakah boleh aktif atau masih delay 15 menit untuk ESP
     public function pumpStatus()
     {
-        $latest = SensorData::find(1);
+    $latest = SensorData::where('sensor_id', 1)->first();
         $latestLog = PhPumpLog::latest()->first();
 
         $minPh = 6.3;
@@ -173,7 +180,7 @@ class AquaponicController extends Controller
     // Cek apakah perlu menyemprot ppm
     public function checkPpmAndTriggerPump()
     {
-        $latest = SensorData::find(1); // Data realtime terbaru
+    $latest = SensorData::where('sensor_id', 1)->first(); // Data realtime terbaru for sensor 1
 
         if (!$latest) {
             return response()->json(['status' => 'no_data'], 404);
@@ -207,7 +214,7 @@ class AquaponicController extends Controller
 
     public function pumpStatusPpm()
     {
-        $latest = SensorData::find(1);
+    $latest = SensorData::where('sensor_id', 1)->first();
         $latestLog = PpmPumpLog::latest()->first();
 
         if (!$latest || !$latest->tds) {

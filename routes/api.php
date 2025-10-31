@@ -5,17 +5,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AquaponicController;
 use App\Models\SensorData;
 
-Route::post('/sensor/realtime', [AquaponicController::class, 'updateRealtime']);
 Route::post('/sensor/history', [AquaponicController::class, 'storeHistory']);
+Route::post('/sensor/realtime', [AquaponicController::class, 'updateRealtime']);
 Route::get('/sensor/realtime', function (Request $request) {
     $sensorId = $request->input('sensor_id', 1); // Default sensor 1
 
-    // Karena di DB belum ada field sensor_id, return null untuk sensor 2,3,4
-    if ($sensorId != 1) {
+    $latest = SensorData::where('sensor_id', $sensorId)->latest('updated_at')->first();
+    if (!$latest) {
         return response()->json(null);
     }
-
-    $latest = SensorData::latest()->first();
     return response()->json($latest);
 });
 Route::get('/sensor/history', [AquaponicController::class, 'getHistory']);
