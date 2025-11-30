@@ -4,6 +4,7 @@ let selectedParameter = 'ph';
 let summaryLoaded = false;
 let summaryCharts = [];
 let sse = null;
+let selectedBatchSensor = 1;
 const sseUrl = document.querySelector('meta[name="sse-url"]')?.getAttribute('content') || 'http://localhost:8081';
 
 function updateCardVisibility() {
@@ -33,9 +34,12 @@ function toggleChartVisibility() {
 document.addEventListener('DOMContentLoaded', () => {
     const sensorDropdown = document.getElementById('sensorDropdown');
     const parameterDropdown = document.getElementById('parameterDropdown');
+    const batchSensorDropdown = document.getElementById('batchSensorDropdown');
     const tabBtnRealtime = document.getElementById('tab-btn-realtime');
+    const tabBtnBatch = document.getElementById('tab-btn-batch');
     const tabBtnSummary = document.getElementById('tab-btn-summary');
     const tabRealtime = document.getElementById('tab-realtime-section');
+    const tabBatch = document.getElementById('tab-batch-section');
     const tabSummary = document.getElementById('tab-summary-section');
     const historyCard = document.getElementById('history-card-container');
 
@@ -51,18 +55,55 @@ document.addEventListener('DOMContentLoaded', () => {
         renderFromState();
     });
 
+    batchSensorDropdown.addEventListener('change', function() {
+        selectedBatchSensor = parseInt(this.value, 10);
+        renderBatchFromState();
+    });
+
+    const saveBtn = document.getElementById('saveSnapshotBtn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            await saveSnapshotIndividual();
+        });
+    }
+    const saveBatchBtn = document.getElementById('saveBatchSnapshotBtn');
+    if (saveBatchBtn) {
+        saveBatchBtn.addEventListener('click', async () => {
+            await saveSnapshotBatch();
+        });
+    }
+    const saveAllBtn = document.getElementById('saveSummarySnapshotBtn');
+    if (saveAllBtn) {
+        saveAllBtn.addEventListener('click', async () => {
+            await saveSnapshotAll();
+        });
+    }
+
     const activateTab = (tab) => {
         if (tab === 'realtime') {
             tabBtnRealtime.classList.replace('tab-inactive', 'tab-active');
             tabBtnSummary.classList.replace('tab-active', 'tab-inactive');
+            tabBtnBatch.classList.replace('tab-active', 'tab-inactive');
             tabRealtime.style.display = 'block';
+            tabBatch.style.display = 'none';
             tabSummary.style.display = 'none';
             if (historyCard) historyCard.style.display = 'block';
             renderFromState();
+        } else if (tab === 'batch') {
+            tabBtnBatch.classList.replace('tab-inactive', 'tab-active');
+            tabBtnRealtime.classList.replace('tab-active', 'tab-inactive');
+            tabBtnSummary.classList.replace('tab-active', 'tab-inactive');
+            tabRealtime.style.display = 'none';
+            tabBatch.style.display = 'block';
+            tabSummary.style.display = 'none';
+            if (historyCard) historyCard.style.display = 'none';
+            renderBatchFromState();
         } else {
             tabBtnSummary.classList.replace('tab-inactive', 'tab-active');
             tabBtnRealtime.classList.replace('tab-active', 'tab-inactive');
+            tabBtnBatch.classList.replace('tab-active', 'tab-inactive');
             tabRealtime.style.display = 'none';
+            tabBatch.style.display = 'none';
             tabSummary.style.display = 'block';
             if (historyCard) historyCard.style.display = 'none';
             if (!summaryLoaded) {
@@ -74,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     tabBtnRealtime.addEventListener('click', () => activateTab('realtime'));
+    tabBtnBatch.addEventListener('click', () => activateTab('batch'));
     tabBtnSummary.addEventListener('click', () => activateTab('summary'));
 
     updateCardVisibility();
@@ -82,6 +124,36 @@ document.addEventListener('DOMContentLoaded', () => {
         startSSE();
         activateTab('realtime');
     });
+
+    // Export modal
+    const exportModal = document.getElementById('exportModal');
+    const openExportModal = document.getElementById('openExportModal');
+    const closeExportModal = document.getElementById('closeExportModal');
+    const expStart = document.getElementById('exportStart');
+    const expEnd = document.getElementById('exportEnd');
+    const expDataType = document.getElementById('exportDataType');
+    const expSensorType = document.getElementById('exportSensorType');
+    const pdfBtn = document.getElementById('exportPdfBtn');
+    const excelBtn = document.getElementById('exportExcelBtn');
+    const buildExportUrl = (type) => {
+        const params = new URLSearchParams({
+            data_type: expDataType?.value || 'realtime',
+            sensor_type: expSensorType?.value || 'all',
+            start_date: expStart?.value || '',
+            end_date: expEnd?.value || '',
+        });
+        return type === 'pdf'
+            ? `{{ route('sensor.export.pdf') }}?${params.toString()}`
+            : `{{ route('sensor.export.excel') }}?${params.toString()}`;
+    };
+    if (openExportModal && exportModal) {
+        openExportModal.addEventListener('click', () => { exportModal.classList.remove('hidden'); });
+    }
+    if (closeExportModal && exportModal) {
+        closeExportModal.addEventListener('click', () => { exportModal.classList.add('hidden'); });
+    }
+    if (pdfBtn) pdfBtn.addEventListener('click', () => { window.open(buildExportUrl('pdf'), '_blank'); exportModal?.classList.add('hidden'); });
+    if (excelBtn) excelBtn.addEventListener('click', () => { window.open(buildExportUrl('excel'), '_blank'); exportModal?.classList.add('hidden'); });
 });
 
 function formatTime(dateString) {
@@ -250,9 +322,98 @@ function renderFromState() {
         });
     }
     toggleChartVisibility();
+    renderBatchFromState();
 }
 
-async function saveSnapshot() {
+function renderBatchFromState() {
+    const sensors = {
+        ph: document.getElementById('batch-ph'),
+        suhu: document.getElementById('batch-suhu'),
+        tds: document.getElementById('batch-tds'),
+    };
+    const bars = {
+        ph: document.getElementById('batch-ph-bar'),
+        suhu: document.getElementById('batch-suhu-bar'),
+        tds: document.getElementById('batch-tds-bar'),
+    };
+    const statuses = {
+        ph: document.getElementById('batch-ph-status'),
+        suhu: document.getElementById('batch-suhu-status'),
+        tds: document.getElementById('batch-tds-status'),
+    };
+    Object.keys(sensors).forEach(param => {
+        const key = `${param}-${selectedBatchSensor}`;
+        const data = state.realtime[key] || null;
+        const valEl = sensors[param];
+        const barEl = bars[param];
+        const statusEl = statuses[param];
+        if (valEl) valEl.textContent = '-';
+        if (barEl) barEl.style.width = '0%';
+        if (statusEl) statusEl.textContent = '-';
+        if (!data) return;
+        const val = parseFloat(data.value);
+        if (isNaN(val)) return;
+        if (param === 'ph') {
+            valEl.textContent = val.toFixed(2);
+            const pct = Math.min(Math.max(((val - 4) / 4) * 100, 0), 100);
+            if (barEl) { barEl.style.width = `${pct}%`; barEl.style.backgroundColor = val >=6 && val<=7.5 ? '#34d399' : '#f87171'; }
+            if (statusEl) statusEl.textContent = val < 6 ? 'Terlalu rendah' : (val > 7.5 ? 'Terlalu tinggi' : 'Optimal');
+        } else if (param === 'suhu') {
+            valEl.textContent = `${val.toFixed(1)}°C`;
+            let width='0%', color='#facc15', status='Terlalu dingin';
+            if (val < 22) { width='33%'; color='#facc15'; status='Terlalu dingin'; }
+            else if (val <= 30) { width='66%'; color='#34d399'; status='Optimal'; }
+            else { width='100%'; color='#de2121'; status='Terlalu panas'; }
+            if (barEl) { barEl.style.width = width; barEl.style.backgroundColor = color; }
+            if (statusEl) statusEl.textContent = status;
+        } else if (param === 'tds') {
+            valEl.textContent = `${val.toFixed(0)}%`;
+            let width='0%', color='#facc15', status='Terlalu rendah';
+            if (val < 20) { width='33%'; color='#facc15'; status='Terlalu rendah'; }
+            else if (val <= 80) { width='66%'; color='#34d399'; status='Optimal'; }
+            else { width='100%'; color='#de2121'; status='Berlebihan'; }
+            if (barEl) { barEl.style.width = width; barEl.style.backgroundColor = color; }
+            if (statusEl) statusEl.textContent = status;
+        }
+    });
+
+    // Update batch charts
+    const chartMap = {
+        ph: batchPhChart,
+        suhu: batchSuhuChart,
+        tds: batchTdsChart,
+    };
+    Object.entries(chartMap).forEach(([param, chart]) => {
+        if (!chart) return;
+        const key = `${param}-${selectedBatchSensor}`;
+        const hist = state.histories[key] || [];
+        const labels = hist.map(d => formatTime(d.created_at));
+        const values = hist.map(d => d.value);
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = values;
+        chart.update();
+    });
+}
+async function postSnapshot(payloads) {
+    for (const payload of payloads) {
+        await fetch('/api/sensor/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const key = `${payload.parameter}-${payload.sensor_no}`;
+        if (!state.histories[key]) state.histories[key] = [];
+        state.histories[key].push({
+            parameter: payload.parameter,
+            sensor_no: payload.sensor_no,
+            value: payload.value,
+            created_at: new Date().toISOString()
+        });
+    }
+    renderFromState();
+}
+
+async function saveSnapshotIndividual() {
     const sensorKey = `${selectedParameter}-${selectedSensorNo}`;
     const data = state.realtime[sensorKey];
     if (!data) return;
@@ -263,15 +424,37 @@ async function saveSnapshot() {
         status_pump_ph: data.status_pump_ph != null ? Boolean(data.status_pump_ph) : false,
         status_pump_ppm: data.status_pump_ppm != null ? Boolean(data.status_pump_ppm) : false
     };
-    await fetch('/api/sensor/history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload)
+    await postSnapshot([payload]);
+}
+
+async function saveSnapshotBatch() {
+    const params = ['ph','suhu','tds'];
+    const payloads = [];
+    params.forEach(param => {
+        const key = `${param}-${selectedBatchSensor}`;
+        const data = state.realtime[key];
+        if (data) {
+            payloads.push({
+                parameter: param,
+                sensor_no: selectedBatchSensor,
+                value: data.value != null ? parseFloat(data.value) : null,
+                status_pump_ph: data.status_pump_ph != null ? Boolean(data.status_pump_ph) : false,
+                status_pump_ppm: data.status_pump_ppm != null ? Boolean(data.status_pump_ppm) : false
+            });
+        }
     });
-    // local append
-    if (!state.histories[sensorKey]) state.histories[sensorKey] = [];
-    state.histories[sensorKey].push({ parameter:selectedParameter, sensor_no:selectedSensorNo, value: payload.value, created_at: new Date().toISOString() });
-    renderFromState();
+    if (payloads.length) await postSnapshot(payloads);
+}
+
+async function saveSnapshotAll() {
+    const payloads = Object.values(state.realtime).map(item => ({
+        parameter: item.parameter,
+        sensor_no: item.sensor_no,
+        value: item.value != null ? parseFloat(item.value) : null,
+        status_pump_ph: item.status_pump_ph != null ? Boolean(item.status_pump_ph) : false,
+        status_pump_ppm: item.status_pump_ppm != null ? Boolean(item.status_pump_ppm) : false
+    }));
+    if (payloads.length) await postSnapshot(payloads);
 }
 
 async function fetchAvailableSensors(parameter) {
@@ -482,6 +665,26 @@ const tdsChart = new Chart(tdsCtx, {
     data: { labels: [], datasets: [{ label: 'TDS (%)', data: [], backgroundColor: 'rgba(139,92,246,0.1)', borderColor: 'rgba(139,92,246,1)', borderWidth: 3, fill: true }] },
     options: { ...chartOptions, plugins: { ...chartOptions.plugins, title: { display: true, text: 'Tingkat Kelembapan (%)', font: { size:16, weight:'bold' }, padding: { bottom:16 } } } }
 });
+
+// Batch charts
+const batchPhCtx = document.getElementById('batchPhChart')?.getContext('2d');
+const batchSuhuCtx = document.getElementById('batchSuhuChart')?.getContext('2d');
+const batchTdsCtx = document.getElementById('batchTdsChart')?.getContext('2d');
+const batchPhChart = batchPhCtx ? new Chart(batchPhCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'pH', data: [], backgroundColor: 'rgba(14,165,233,0.1)', borderColor: 'rgba(14,165,233,1)', borderWidth: 3, fill: true }] },
+    options: { ...chartOptions, plugins: { ...chartOptions.plugins, title: { display: true, text: 'History pH', font: { size:14, weight:'bold' }, padding: { bottom:12 } } } }
+}) : null;
+const batchSuhuChart = batchSuhuCtx ? new Chart(batchSuhuCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'Suhu (°C)', data: [], backgroundColor: 'rgba(249,115,22,0.1)', borderColor: 'rgba(249,115,22,1)', borderWidth: 3, fill: true }] },
+    options: { ...chartOptions, plugins: { ...chartOptions.plugins, title: { display: true, text: 'History Suhu', font: { size:14, weight:'bold' }, padding: { bottom:12 } } } }
+}) : null;
+const batchTdsChart = batchTdsCtx ? new Chart(batchTdsCtx, {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'TDS (%)', data: [], backgroundColor: 'rgba(139,92,246,0.1)', borderColor: 'rgba(139,92,246,1)', borderWidth: 3, fill: true }] },
+    options: { ...chartOptions, plugins: { ...chartOptions.plugins, title: { display: true, text: 'History Kelembapan', font: { size:14, weight:'bold' }, padding: { bottom:12 } } } }
+}) : null;
 
 // SSE handling
 async function initState() {

@@ -38,7 +38,7 @@ class SensorExportController extends Controller
             $data = $this->getRealtimeData($startDate, $endDate, $sensorType);
             $title = 'Laporan Data Sensor Real-time';
         } else {
-            $data = $this->getDailyData($startDate, $endDate);
+            $data = $this->getDailyData($startDate, $endDate, $sensorType);
             $title = 'Laporan Data Sensor Harian';
         }
 
@@ -77,29 +77,39 @@ class SensorExportController extends Controller
         $dataType = $request->input('data_type');
 
         $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Set title
-        $title = $dataType === 'realtime' ? 'Laporan Data Sensor Real-time' : 'Laporan Data Sensor Harian';
-        $sheet->setCellValue('A1', $title);
-        $sheet->mergeCells('A1:H1');
-        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
-        $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        // Set date range
-        $sheet->setCellValue('A2', 'Periode: ' . $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y'));
-        $sheet->mergeCells('A2:H2');
-        $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        // mulai dengan sheet kosong
+        $spreadsheet->removeSheetByIndex(0);
 
         if ($dataType === 'realtime') {
-            $this->fillRealtimeExcel($sheet, $startDate, $endDate, $sensorType);
+            $data = $this->getRealtimeData($startDate, $endDate, $sensorType);
+            $grouped = $data->groupBy(function ($item) {
+                return $item->parameter . '-' . $item->sensor_no;
+            });
+            $first = true;
+            foreach ($grouped as $key => $items) {
+                $sheet = $spreadsheet->createSheet();
+                $sheet->setTitle(substr('RT-' . strtoupper($key), 0, 31));
+                $this->fillRealtimeExcel($sheet, $startDate, $endDate, $items);
+                if ($first) {
+                    $spreadsheet->setActiveSheetIndex($spreadsheet->getIndex($sheet));
+                    $first = false;
+                }
+            }
         } else {
-            $this->fillDailyExcel($sheet, $startDate, $endDate, $sensorType);
-        }
-
-        // Auto-size columns
-        foreach (range('A', 'H') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
+            $data = $this->getDailyData($startDate, $endDate, $sensorType);
+            $grouped = $data->groupBy(function ($item) {
+                return $item->parameter . '-' . $item->sensor_no;
+            });
+            $first = true;
+            foreach ($grouped as $key => $items) {
+                $sheet = $spreadsheet->createSheet();
+                $sheet->setTitle(substr('DL-' . strtoupper($key), 0, 31));
+                $this->fillDailyExcel($sheet, $startDate, $endDate, $items);
+                if ($first) {
+                    $spreadsheet->setActiveSheetIndex($spreadsheet->getIndex($sheet));
+                    $first = false;
+                }
+            }
         }
 
         $filename = 'sensor-report-' . $startDate->format('Ymd') . '-' . $endDate->format('Ymd') . '.xlsx';
@@ -133,37 +143,36 @@ class SensorExportController extends Controller
      * Get daily aggregated data
      * Agregasi langsung dari sensor_histories per hari
      */
-    private function getDailyData($startDate, $endDate)
+    private function getDailyData($startDate, $endDate, $sensorType = 'all')
     {
         return SensorHistory::whereBetween('created_at', [$startDate, $endDate])
-            ->selectRaw('DATE(created_at) as log_date')
-            ->selectRaw('ROUND(AVG(CASE WHEN parameter = \"ph\" THEN value END), 2) as avg_ph')
-            ->selectRaw('ROUND(MIN(CASE WHEN parameter = \"ph\" THEN value END), 2) as min_ph')
-            ->selectRaw('ROUND(MAX(CASE WHEN parameter = \"ph\" THEN value END), 2) as max_ph')
-            ->selectRaw('ROUND(AVG(CASE WHEN parameter = \"suhu\" THEN value END), 2) as avg_suhu')
-            ->selectRaw('ROUND(MIN(CASE WHEN parameter = \"suhu\" THEN value END), 2) as min_suhu')
-            ->selectRaw('ROUND(MAX(CASE WHEN parameter = \"suhu\" THEN value END), 2) as max_suhu')
-            ->selectRaw('ROUND(AVG(CASE WHEN parameter = \"tds\" THEN value END), 2) as avg_tds')
-            ->selectRaw('ROUND(MIN(CASE WHEN parameter = \"tds\" THEN value END), 2) as min_tds')
-            ->selectRaw('ROUND(MAX(CASE WHEN parameter = \"tds\" THEN value END), 2) as max_tds')
-            ->selectRaw('SUM(CASE WHEN parameter = \"ph\" AND status_pump_ph = 1 THEN 1 ELSE 0 END) as pump_ph_activations')
-            ->selectRaw('SUM(CASE WHEN parameter = \"tds\" AND status_pump_ppm = 1 THEN 1 ELSE 0 END) as pump_ppm_activations')
+            ->when($sensorType !== 'all', function ($query) use ($sensorType) {
+                $query->where('parameter', $sensorType);
+            })
+            ->selectRaw('DATE(`created_at`) as log_date')
+            ->selectRaw('parameter')
+            ->selectRaw('sensor_no')
+            ->selectRaw('ROUND(AVG(value), 2) as avg_value')
+            ->selectRaw('ROUND(MIN(value), 2) as min_value')
+            ->selectRaw('ROUND(MAX(value), 2) as max_value')
+            ->selectRaw('SUM(CASE WHEN status_pump_ph = 1 THEN 1 ELSE 0 END) as pump_ph_activations')
+            ->selectRaw('SUM(CASE WHEN status_pump_ppm = 1 THEN 1 ELSE 0 END) as pump_ppm_activations')
             ->selectRaw('COUNT(*) as total_records')
-            ->groupBy('log_date')
+            ->groupBy('log_date', 'parameter', 'sensor_no')
             ->orderBy('log_date', 'asc')
+            ->orderBy('parameter')
+            ->orderBy('sensor_no')
             ->get();
     }
 
     /**
      * Fill Excel with realtime data
      */
-    private function fillRealtimeExcel($sheet, $startDate, $endDate, $sensorType)
+    private function fillRealtimeExcel($sheet, $startDate, $endDate, $items)
     {
-        $data = $this->getRealtimeData($startDate, $endDate, $sensorType);
-
         // Header row
         $row = 4;
-        $headers = ['No', 'Tanggal & Waktu', 'pH', 'Suhu (°C)', 'TDS (ppm)', 'Pompa pH', 'Pompa PPM'];
+        $headers = ['No', 'Tanggal & Waktu', 'Parameter', 'Sensor #', 'Nilai', 'Pompa pH', 'Pompa PPM'];
         $col = 'A';
         foreach ($headers as $header) {
             $sheet->setCellValue($col . $row, $header);
@@ -181,24 +190,14 @@ class SensorExportController extends Controller
         // Data rows
         $row = 5;
         $no = 1;
-        foreach ($data as $item) {
+        foreach ($items as $item) {
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $item->created_at->format('d/m/Y H:i:s'));
-
-            // Isi kolom sesuai parameter yang tersimpan
-            if ($sensorType === 'all' || $sensorType === 'ph') {
-                $sheet->setCellValue('C' . $row, $item->parameter === 'ph' ? $item->value : null);
-            }
-            if ($sensorType === 'all' || $sensorType === 'suhu') {
-                $sheet->setCellValue('D' . $row, $item->parameter === 'suhu' ? $item->value : null);
-            }
-            if ($sensorType === 'all' || $sensorType === 'tds') {
-                $sheet->setCellValue('E' . $row, $item->parameter === 'tds' ? $item->value : null);
-            }
-            if ($sensorType === 'all') {
-                $sheet->setCellValue('F' . $row, $item->parameter === 'ph' && $item->status_pump_ph ? 'ON' : 'OFF');
-                $sheet->setCellValue('G' . $row, $item->parameter === 'tds' && $item->status_pump_ppm ? 'ON' : 'OFF');
-            }
+            $sheet->setCellValue('C' . $row, strtoupper($item->parameter));
+            $sheet->setCellValue('D' . $row, $item->sensor_no);
+            $sheet->setCellValue('E' . $row, $item->value);
+            $sheet->setCellValue('F' . $row, $item->parameter === 'ph' && $item->status_pump_ph ? 'ON' : 'OFF');
+            $sheet->setCellValue('G' . $row, $item->parameter === 'tds' && $item->status_pump_ppm ? 'ON' : 'OFF');
 
             $row++;
         }
@@ -213,18 +212,23 @@ class SensorExportController extends Controller
                 ],
             ],
         ]);
+
+        // Auto-size columns for readability
+        foreach (range('A', 'G') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+        // Make date column wider to prevent truncation
+        $sheet->getColumnDimension('B')->setWidth(22);
     }
 
     /**
      * Fill Excel with daily data
      */
-    private function fillDailyExcel($sheet, $startDate, $endDate, $sensorType)
+    private function fillDailyExcel($sheet, $startDate, $endDate, $items)
     {
-        $data = $this->getDailyData($startDate, $endDate);
-
         // Header row
         $row = 4;
-        $headers = ['No', 'Tanggal', 'Avg pH', 'Min pH', 'Max pH', 'Avg Suhu', 'Min Suhu', 'Max Suhu', 'Avg TDS', 'Min TDS', 'Max TDS', 'Pompa pH', 'Pompa PPM', 'Total Data'];
+        $headers = ['No', 'Tanggal', 'Parameter', 'Sensor #', 'Avg', 'Min', 'Max', 'Pompa pH', 'Pompa PPM', 'Total Data'];
         $col = 'A';
         foreach ($headers as $header) {
             $sheet->setCellValue($col . $row, $header);
@@ -232,38 +236,33 @@ class SensorExportController extends Controller
         }
 
         // Style header
-        $sheet->getStyle('A4:N4')->getFont()->setBold(true);
-        $sheet->getStyle('A4:N4')->getFill()
+        $sheet->getStyle('A4:J4')->getFont()->setBold(true);
+        $sheet->getStyle('A4:J4')->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()->setRGB('4472C4');
-        $sheet->getStyle('A4:N4')->getFont()->getColor()->setRGB('FFFFFF');
-        $sheet->getStyle('A4:N4')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A4:J4')->getFont()->getColor()->setRGB('FFFFFF');
+        $sheet->getStyle('A4:J4')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
         // Data rows
         $row = 5;
         $no = 1;
-        foreach ($data as $item) {
+        foreach ($items as $item) {
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, Carbon::parse($item->log_date)->format('d/m/Y'));
-            $sheet->setCellValue('C' . $row, $item->avg_ph);
-            $sheet->setCellValue('D' . $row, $item->min_ph);
-            $sheet->setCellValue('E' . $row, $item->max_ph);
-            $sheet->setCellValue('F' . $row, $item->avg_suhu);
-            $sheet->setCellValue('G' . $row, $item->min_suhu);
-            $sheet->setCellValue('H' . $row, $item->max_suhu);
-            $sheet->setCellValue('I' . $row, $item->avg_tds);
-            $sheet->setCellValue('J' . $row, $item->min_tds);
-            $sheet->setCellValue('K' . $row, $item->max_tds);
-            $sheet->setCellValue('L' . $row, $item->pump_ph_activations . 'x');
-            $sheet->setCellValue('M' . $row, $item->pump_ppm_activations . 'x');
-            $sheet->setCellValue('N' . $row, $item->total_records);
+            $sheet->setCellValue('C' . $row, strtoupper($item->parameter));
+            $sheet->setCellValue('D' . $row, $item->sensor_no);
+            $sheet->setCellValue('E' . $row, $item->avg_value);
+            $sheet->setCellValue('F' . $row, $item->min_value);
+            $sheet->setCellValue('G' . $row, $item->max_value);
+            $sheet->setCellValue('H' . $row, $item->pump_ph_activations . 'x');
+            $sheet->setCellValue('I' . $row, $item->pump_ppm_activations . 'x');
+            $sheet->setCellValue('J' . $row, $item->total_records);
 
             $row++;
         }
 
-        // Add borders
         $lastRow = $row - 1;
-        $sheet->getStyle('A4:N' . $lastRow)->applyFromArray([
+        $sheet->getStyle('A4:J' . $lastRow)->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
@@ -272,10 +271,12 @@ class SensorExportController extends Controller
             ],
         ]);
 
-        // Auto-size additional columns
-        foreach (range('I', 'N') as $col) {
+        // Auto-size columns for readability
+        foreach (range('A', 'J') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
+        // Make date column wider to prevent truncation
+        $sheet->getColumnDimension('B')->setWidth(18);
     }
 
     /**

@@ -49,23 +49,16 @@
                 <i class="fas fa-chart-line text-emerald-600"></i> Dashboard Monitoring
             </h1>
             <div class="flex gap-2 w-full sm:w-auto">
-                <a href="{{ route('sensor.export.pdf') }}?data_type=realtime&sensor_type=all&start_date={{ date('Y-m-d', strtotime('-7 days')) }}&end_date={{ date('Y-m-d') }}"
-                   class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-all duration-300 flex items-center gap-2 flex-1 sm:flex-initial justify-center"
-                   target="_blank">
-                    <i class="fas fa-file-pdf"></i>
-                    <span class="hidden sm:inline">PDF</span>
-                </a>
-                <a href="{{ route('sensor.export.excel') }}?data_type=realtime&sensor_type=all&start_date={{ date('Y-m-d', strtotime('-7 days')) }}&end_date={{ date('Y-m-d') }}"
-                   class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transition-all duration-300 flex items-center gap-2 flex-1 sm:flex-initial justify-center">
-                    <i class="fas fa-file-excel"></i>
-                    <span class="hidden sm:inline">Excel</span>
-                </a>
+                <button type="button" id="openExportModal" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition-all duration-200 flex items-center gap-2">
+                    <i class="fas fa-download"></i><span class="hidden sm:inline">Export</span>
+                </button>
             </div>
         </div>
 
         <!-- Tabs -->
         <div class="flex gap-2 mb-6">
             <button id="tab-btn-realtime" class="tab-button tab-active">Realtime & Grafik</button>
+            <button id="tab-btn-batch" class="tab-button tab-inactive">Batch (per Sensor)</button>
             <button id="tab-btn-summary" class="tab-button tab-inactive">Semua Sensor</button>
         </div>
 
@@ -74,10 +67,17 @@
             @include('monitoring.individual')
         </div>
 
+        <!-- Tab: Batch -->
+        <div id="tab-batch-section" style="display:none;">
+            @include('monitoring.batch')
+        </div>
+
         <!-- Tab: All Sensors -->
         <div id="tab-summary-section" style="display:none;">
             @include('monitoring.all')
         </div>
+
+        @include('monitoring.modal-download')
 
         <!-- Footer -->
         <footer class="text-center py-6 text-gray-500 text-sm border-t mt-10">

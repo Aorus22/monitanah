@@ -4,7 +4,12 @@
             <h2 class="text-lg sm:text-xl font-bold text-emerald-800 flex items-center gap-2">
                 <i class="fas fa-sync-alt text-emerald-600"></i> Data Sensor Real-time
             </h2>
-            <div id="realtime-loader" class="loader" style="display:none;"></div>
+            <div class="flex items-center gap-3">
+                <button id="saveSnapshotBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-3 rounded-lg shadow transition-all duration-200">
+                    <i class="fas fa-save mr-2"></i>Simpan Snapshot
+                </button>
+                <div id="realtime-loader" class="loader" style="display:none;"></div>
+            </div>
         </div>
         <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
             <label for="parameterDropdown" class="text-gray-700 font-medium text-sm sm:text-base">Parameter:</label>
@@ -61,11 +66,6 @@
                     <i class="fas fa-microchip text-gray-500"></i>
                 </div>
                 <div id="sensor_id" class="text-xl font-mono font-bold mt-2 text-gray-700">-</div>
-                <div class="mt-3 flex justify-center">
-                    <button id="saveSnapshotBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-3 rounded-lg shadow transition-all duration-200">
-                        <i class="fas fa-save mr-2"></i>Simpan Snapshot
-                    </button>
-                </div>
             </div>
         </div>
 
