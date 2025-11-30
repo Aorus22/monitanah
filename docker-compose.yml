@@ -16,6 +16,23 @@ services:
     networks:
       - aquapoliban_net
 
+  sse-service:
+    build:
+      context: ./sse-service
+    container_name: sse-service
+    restart: always
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+    ports:
+      - "6673:6673"
+    depends_on:
+      - db
+    networks:
+      - aquapoliban_net
+
   db:
     image: mysql:8.0
     container_name: aquapoliban-mysql

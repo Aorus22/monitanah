@@ -1,11 +1,10 @@
-    <script>
+<script>
 let selectedSensorNo = 1;
 let selectedParameter = 'ph';
 let summaryLoaded = false;
 let summaryCharts = [];
-let realtimeTimer = null;
-let historyTimer = null;
-let summaryTimer = null;
+let sse = null;
+const sseUrl = document.querySelector('meta[name="sse-url"]')?.getAttribute('content') || 'http://localhost:8081';
 
 function updateCardVisibility() {
     const cards = {
@@ -42,16 +41,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sensorDropdown.addEventListener('change', function() {
         selectedSensorNo = parseInt(this.value, 10);
-        updateRealtimeSection();
-        updateHistoryCharts();
+        renderFromState();
     });
 
     parameterDropdown.addEventListener('change', function() {
         selectedParameter = this.value;
         updateCardVisibility();
         toggleChartVisibility();
-        updateRealtimeSection();
-        updateHistoryCharts();
+        renderFromState();
     });
 
     const activateTab = (tab) => {
@@ -61,15 +58,19 @@ document.addEventListener('DOMContentLoaded', () => {
             tabRealtime.style.display = 'block';
             tabSummary.style.display = 'none';
             if (historyCard) historyCard.style.display = 'block';
-            startRealtimePolling();
+            renderFromState();
         } else {
             tabBtnSummary.classList.replace('tab-inactive', 'tab-active');
             tabBtnRealtime.classList.replace('tab-active', 'tab-inactive');
             tabRealtime.style.display = 'none';
             tabSummary.style.display = 'block';
             if (historyCard) historyCard.style.display = 'none';
-            stopRealtimePolling();
-            startSummaryPolling();
+            if (!summaryLoaded) {
+                summaryLoaded = true;
+                buildSummaryTab();
+            } else {
+                buildSummaryTab();
+            }
         }
     };
     tabBtnRealtime.addEventListener('click', () => activateTab('realtime'));
@@ -77,7 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateCardVisibility();
     toggleChartVisibility();
-    activateTab('realtime');
+    initState().then(() => {
+        startSSE();
+        activateTab('realtime');
+    });
 });
 
 function formatTime(dateString) {
@@ -143,8 +147,27 @@ function prettyValue(parameter, value) {
     return v;
 }
 
-async function updateRealtimeSection() {
-    const data = await fetchRealtimeData();
+const state = {
+    realtime: {}, // key: param-sensor => {parameter,sensor_no,value,updated_at}
+    histories: {} // key: param-sensor => array
+};
+
+async function initState() {
+    const rt = await fetchRealtimeAll();
+    rt.forEach(item => {
+        state.realtime[`${item.parameter}-${item.sensor_no}`] = item;
+    });
+    const hist = await fetchAllHistory();
+    Object.entries(hist).forEach(([k, arr]) => {
+        state.histories[k] = arr;
+    });
+    renderFromState();
+}
+
+function renderFromState() {
+    const sensorKey = `${selectedParameter}-${selectedSensorNo}`;
+    const data = state.realtime[sensorKey] || null;
+
     const sensorIdElement = document.getElementById('sensor_id');
     if (sensorIdElement) sensorIdElement.textContent = `${selectedParameter.toUpperCase()}-${selectedSensorNo}`;
 
@@ -163,84 +186,75 @@ async function updateRealtimeSection() {
     if (suhuDisplay) { suhuDisplay.textContent='-'; if (suhuBar) suhuBar.style.width='0%'; if (suhuStatus) suhuStatus.textContent='-'; }
     if (tdsDisplay) { tdsDisplay.textContent='-'; if (tdsBar) tdsBar.style.width='0%'; if (tdsStatus) tdsStatus.textContent='-'; }
 
-    if (!data) return;
+    if (data) {
+        if (data.parameter === 'ph' && phDisplay) {
+            const val = parseFloat(data.value);
+            if (!isNaN(val)) {
+                phDisplay.textContent = val.toFixed(2);
+                const pct = Math.min(Math.max(((val - 4) / 4) * 100, 0), 100);
+                if (phBar) { phBar.style.width = `${pct}%`; phBar.style.backgroundColor = val >=6 && val<=7.5 ? '#34d399' : '#f87171'; }
+                if (phStatus) phStatus.textContent = val < 6 ? 'Terlalu rendah' : (val > 7.5 ? 'Terlalu tinggi' : 'Optimal');
+            }
+        }
+        if (data.parameter === 'suhu' && suhuDisplay) {
+            const val = parseFloat(data.value);
+            if (!isNaN(val)) {
+                suhuDisplay.textContent = `${val.toFixed(1)}°C`;
+                let width='0%', color='#facc15', status='Terlalu dingin';
+                if (val < 22) { width='33%'; color='#facc15'; status='Terlalu dingin'; }
+                else if (val <= 30) { width='66%'; color='#34d399'; status='Optimal'; }
+                else { width='100%'; color='#de2121'; status='Terlalu panas'; }
+                if (suhuBar) { suhuBar.style.width = width; suhuBar.style.backgroundColor = color; }
+                if (suhuStatus) suhuStatus.textContent = status;
+            }
+        }
+        if (data.parameter === 'tds' && tdsDisplay) {
+            const val = parseFloat(data.value);
+            if (!isNaN(val)) {
+                tdsDisplay.textContent = `${val.toFixed(0)}%`;
+                let width='0%', color='#facc15', status='Terlalu rendah';
+                if (val < 20) { width='33%'; color='#facc15'; status='Terlalu rendah'; }
+                else if (val <= 80) { width='66%'; color='#34d399'; status='Optimal'; }
+                else { width='100%'; color='#de2121'; status='Berlebihan'; }
+                if (tdsBar) { tdsBar.style.width = width; tdsBar.style.backgroundColor = color; }
+                if (tdsStatus) tdsStatus.textContent = status;
+            }
+        }
+    }
 
-    if (data.parameter === 'ph' && phDisplay) {
-        const val = parseFloat(data.value);
-        if (!isNaN(val)) {
-            phDisplay.textContent = val.toFixed(2);
-            const pct = Math.min(Math.max(((val - 4) / 4) * 100, 0), 100);
-            if (phBar) { phBar.style.width = `${pct}%`; phBar.style.backgroundColor = val >=6 && val<=7.5 ? '#34d399' : '#f87171'; }
-            if (phStatus) phStatus.textContent = val < 6 ? 'Terlalu rendah' : (val > 7.5 ? 'Terlalu tinggi' : 'Optimal');
-        }
-    }
-    if (data.parameter === 'suhu' && suhuDisplay) {
-        const val = parseFloat(data.value);
-        if (!isNaN(val)) {
-            suhuDisplay.textContent = `${val.toFixed(1)}°C`;
-            let width='0%', color='#facc15', status='Terlalu dingin';
-            if (val < 22) { width='33%'; color='#facc15'; status='Terlalu dingin'; }
-            else if (val <= 30) { width='66%'; color='#34d399'; status='Optimal'; }
-            else { width='100%'; color='#de2121'; status='Terlalu panas'; }
-            if (suhuBar) { suhuBar.style.width = width; suhuBar.style.backgroundColor = color; }
-            if (suhuStatus) suhuStatus.textContent = status;
-        }
-    }
-    if (data.parameter === 'tds' && tdsDisplay) {
-        const val = parseFloat(data.value);
-        if (!isNaN(val)) {
-            tdsDisplay.textContent = `${val.toFixed(0)}%`;
-            let width='0%', color='#facc15', status='Terlalu rendah';
-            if (val < 20) { width='33%'; color='#facc15'; status='Terlalu rendah'; }
-            else if (val <= 80) { width='66%'; color='#34d399'; status='Optimal'; }
-            else { width='100%'; color='#de2121'; status='Berlebihan'; }
-            if (tdsBar) { tdsBar.style.width = width; tdsBar.style.backgroundColor = color; }
-            if (tdsStatus) tdsStatus.textContent = status;
-        }
-    }
-}
-
-async function updateHistoryCharts() {
-    const history = await fetchHistory();
+    // charts
+    const hist = state.histories[sensorKey] || [];
     const chartError = document.getElementById('chart-error');
-    if (history === null) {
-        if (chartError) {
-            chartError.classList.remove('hidden');
-            chartError.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i><span>Gagal mengambil data history.</span>';
-        }
-        [phChart, suhuChart, tdsChart].forEach(ch => { if (ch) { ch.data.labels=[]; ch.data.datasets[0].data=[]; ch.update(); } });
-        return;
-    }
-    if (history.length === 0) {
+    if (hist.length === 0) {
         if (chartError) {
             chartError.classList.remove('hidden');
             chartError.innerHTML = `<i class="fas fa-info-circle mr-2"></i><span>Tidak ada data history untuk sensor ${selectedSensorNo} (${selectedParameter}).</span>`;
         }
         [phChart, suhuChart, tdsChart].forEach(ch => { if (ch) { ch.data.labels=[]; ch.data.datasets[0].data=[]; ch.update(); } });
-        return;
+    } else {
+        if (chartError) chartError.classList.add('hidden');
+        const labels = hist.map(d => formatTime(d.created_at));
+        const values = hist.map(d => d.value);
+        const chartMap = { ph: phChart, suhu: suhuChart, tds: tdsChart };
+        const target = chartMap[selectedParameter];
+        Object.entries(chartMap).forEach(([key, chart]) => {
+            if (!chart) return;
+            if (chart === target) {
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = values;
+            } else {
+                chart.data.labels = [];
+                chart.data.datasets[0].data = [];
+            }
+            chart.update();
+        });
     }
-    if (chartError) chartError.classList.add('hidden');
-
-    const labels = history.map(d => formatTime(d.created_at));
-    const values = history.map(d => d.value);
-    const chartMap = { ph: phChart, suhu: suhuChart, tds: tdsChart };
-    const target = chartMap[selectedParameter];
-    Object.entries(chartMap).forEach(([key, chart]) => {
-        if (!chart) return;
-        if (chart === target) {
-            chart.data.labels = labels;
-            chart.data.datasets[0].data = values;
-        } else {
-            chart.data.labels = [];
-            chart.data.datasets[0].data = [];
-        }
-        chart.update();
-    });
     toggleChartVisibility();
 }
 
 async function saveSnapshot() {
-    const data = await fetchRealtimeData();
+    const sensorKey = `${selectedParameter}-${selectedSensorNo}`;
+    const data = state.realtime[sensorKey];
     if (!data) return;
     const payload = {
         parameter: selectedParameter,
@@ -254,7 +268,10 @@ async function saveSnapshot() {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload)
     });
-    updateHistoryCharts();
+    // local append
+    if (!state.histories[sensorKey]) state.histories[sensorKey] = [];
+    state.histories[sensorKey].push({ parameter:selectedParameter, sensor_no:selectedSensorNo, value: payload.value, created_at: new Date().toISOString() });
+    renderFromState();
 }
 
 async function fetchAvailableSensors(parameter) {
@@ -303,24 +320,20 @@ async function buildSummaryTab() {
     container.innerHTML = '';
     const params = ['ph','suhu','tds'];
     try {
-        const allRealtime = await fetchRealtimeAll();
-        const realtimeMap = {};
-        allRealtime.forEach(item => {
-            const key = `${item.parameter}-${item.sensor_no}`;
-            realtimeMap[key] = item;
-        });
-        const historiesAll = await fetchAllHistory();
+        // Use in-memory state to avoid extra fetches
+        const realtimeMap = state.realtime;
+        const historiesAll = state.histories;
         const availableByParam = {};
         Object.keys(historiesAll).forEach(key => {
             const [p, s] = key.split('-');
             if (!availableByParam[p]) availableByParam[p] = [];
             availableByParam[p].push(parseInt(s, 10));
         });
-        // Fallback to realtime list if history empty
-        allRealtime.forEach(item => {
-            if (!availableByParam[item.parameter]) availableByParam[item.parameter] = [];
-            if (!availableByParam[item.parameter].includes(item.sensor_no)) {
-                availableByParam[item.parameter].push(item.sensor_no);
+        Object.keys(realtimeMap).forEach(key => {
+            const [p, s] = key.split('-');
+            if (!availableByParam[p]) availableByParam[p] = [];
+            if (!availableByParam[p].includes(parseInt(s, 10))) {
+                availableByParam[p].push(parseInt(s, 10));
             }
         });
 
@@ -470,59 +483,56 @@ const tdsChart = new Chart(tdsCtx, {
     options: { ...chartOptions, plugins: { ...chartOptions.plugins, title: { display: true, text: 'Tingkat Kelembapan (%)', font: { size:16, weight:'bold' }, padding: { bottom:16 } } } }
 });
 
-// periodic refresh
-function stopRealtimePolling() {
-    if (realtimeTimer) { clearInterval(realtimeTimer); realtimeTimer = null; }
-    if (historyTimer) { clearInterval(historyTimer); historyTimer = null; }
+// SSE handling
+async function initState() {
+    // initial fetch
+    const rt = await fetchRealtimeAll();
+    rt.forEach(item => {
+        state.realtime[`${item.parameter}-${item.sensor_no}`] = item;
+    });
+    const histAll = await fetchAllHistory();
+    Object.entries(histAll).forEach(([k, arr]) => {
+        state.histories[k] = arr;
+    });
+    renderFromState();
 }
-function startRealtimePolling() {
-    stopRealtimePolling();
-    updateCardVisibility();
-    toggleChartVisibility();
-    updateRealtimeSection();
-    updateHistoryCharts();
-    realtimeTimer = setInterval(updateRealtimeSection, 5000);
-    historyTimer = setInterval(updateHistoryCharts, 10000);
-}
-async function pollSummaryRealtime() {
-    try {
-        const res = await fetch('/api/sensor/realtime/all');
-        if (!res.ok) throw new Error('res not ok');
-        const data = await res.json();
-        if (!Array.isArray(data)) return;
-        data.forEach(item => {
-            const card = document.querySelector(`[data-sum-card="${item.parameter}-${item.sensor_no}"]`);
-            const valEl = card?.querySelector('.summary-value');
-            const barEl = card?.querySelector('.summary-bar');
-            const timeEl = card?.querySelector('.summary-time');
-            if (valEl) valEl.textContent = prettyValue(item.parameter, item.value);
-            if (timeEl && item.updated_at) timeEl.textContent = formatDateTime(item.updated_at);
-            if (barEl && item.value != null) {
-                const rawVal = parseFloat(item.value);
-                if (!isNaN(rawVal)) {
-                    if (item.parameter === 'ph') {
-                        const pct = Math.min(Math.max(((rawVal - 4) / 4) * 100, 0), 100);
-                        barEl.style.width = `${pct}%`;
-                    } else if (item.parameter === 'suhu') {
-                        let width = rawVal < 22 ? 33 : rawVal <= 30 ? 66 : 100;
-                        barEl.style.width = `${width}%`;
-                    } else if (item.parameter === 'tds') {
-                        let width = rawVal < 20 ? 33 : rawVal <= 80 ? 66 : 100;
-                        barEl.style.width = `${width}%`;
-                    }
+
+function startSSE() {
+    if (sse) return;
+    sse = new EventSource(`${sseUrl}/events`);
+        sse.onmessage = (event) => {
+        try {
+            const parsed = JSON.parse(event.data);
+            if (parsed.type === 'realtime') {
+                const p = parsed.payload;
+                state.realtime[`${p.parameter}-${p.sensor_no}`] = p;
+            } else if (parsed.type === 'history') {
+                const h = parsed.payload;
+                const key = `${h.parameter}-${h.sensor_no}`;
+                if (!state.histories[key]) state.histories[key] = [];
+                state.histories[key].push(h);
+                if (state.histories[key].length > 100) {
+                    state.histories[key] = state.histories[key].slice(-100);
                 }
             }
-        });
-    } catch (err) {
-        console.warn('poll summary realtime failed', err);
-    }
+            renderFromState();
+            const summarySection = document.getElementById('tab-summary-section');
+            if (summarySection && summarySection.style.display !== 'none') {
+                buildSummaryTab();
+            }
+        } catch (err) {
+            console.warn('SSE parse error', err);
+        }
+    };
+    sse.onerror = () => {
+        // try reconnect
+        if (sse) sse.close();
+        sse = null;
+        setTimeout(startSSE, 2000);
+    };
 }
-function startSummaryPolling() {
-    if (!summaryLoaded) { summaryLoaded = true; buildSummaryTab().then(() => pollSummaryRealtime()); }
-    pollSummaryRealtime();
-    if (summaryTimer) clearInterval(summaryTimer);
-    summaryTimer = setInterval(pollSummaryRealtime, 5000);
+
+function stopSSE() {
+    if (sse) { sse.close(); sse = null; }
 }
-// start realtime by default
-startRealtimePolling();
-    </script>
+</script>

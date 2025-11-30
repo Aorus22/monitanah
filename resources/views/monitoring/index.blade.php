@@ -2,6 +2,7 @@
 @section('content')
     <title>Sistem Monitoring Tanah</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="sse-url" content="{{ config('app.sse_url', env('SSE_URL', 'http://localhost:8081')) }}">
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
