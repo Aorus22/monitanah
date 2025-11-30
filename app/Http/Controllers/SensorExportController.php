@@ -35,7 +35,7 @@ class SensorExportController extends Controller
         $dataType = $request->input('data_type');
 
         if ($dataType === 'realtime') {
-            $data = $this->getRealtimeData($startDate, $endDate);
+            $data = $this->getRealtimeData($startDate, $endDate, $sensorType);
             $title = 'Laporan Data Sensor Real-time';
         } else {
             $data = $this->getDailyData($startDate, $endDate);
@@ -118,9 +118,13 @@ class SensorExportController extends Controller
      * Get realtime sensor data
      * DATA YANG SAMA DENGAN GRAFIK - Langsung dari sensor_histories!
      */
-    private function getRealtimeData($startDate, $endDate)
+    private function getRealtimeData($startDate, $endDate, $sensorType = 'all')
     {
         return SensorHistory::whereBetween('created_at', [$startDate, $endDate])
+            ->when($sensorType !== 'all', function ($query) use ($sensorType) {
+                $query->where('parameter', $sensorType);
+            })
+            ->select(['parameter', 'sensor_no', 'value', 'status_pump_ph', 'status_pump_ppm', 'created_at'])
             ->orderBy('created_at', 'asc')
             ->get();
     }
@@ -133,17 +137,17 @@ class SensorExportController extends Controller
     {
         return SensorHistory::whereBetween('created_at', [$startDate, $endDate])
             ->selectRaw('DATE(created_at) as log_date')
-            ->selectRaw('ROUND(AVG(ph), 2) as avg_ph')
-            ->selectRaw('ROUND(MIN(ph), 2) as min_ph')
-            ->selectRaw('ROUND(MAX(ph), 2) as max_ph')
-            ->selectRaw('ROUND(AVG(suhu), 2) as avg_suhu')
-            ->selectRaw('ROUND(MIN(suhu), 2) as min_suhu')
-            ->selectRaw('ROUND(MAX(suhu), 2) as max_suhu')
-            ->selectRaw('ROUND(AVG(tds), 2) as avg_tds')
-            ->selectRaw('ROUND(MIN(tds), 2) as min_tds')
-            ->selectRaw('ROUND(MAX(tds), 2) as max_tds')
-            ->selectRaw('SUM(CASE WHEN status_pump_ph = 1 THEN 1 ELSE 0 END) as pump_ph_activations')
-            ->selectRaw('SUM(CASE WHEN status_pump_ppm = 1 THEN 1 ELSE 0 END) as pump_ppm_activations')
+            ->selectRaw('ROUND(AVG(CASE WHEN parameter = \"ph\" THEN value END), 2) as avg_ph')
+            ->selectRaw('ROUND(MIN(CASE WHEN parameter = \"ph\" THEN value END), 2) as min_ph')
+            ->selectRaw('ROUND(MAX(CASE WHEN parameter = \"ph\" THEN value END), 2) as max_ph')
+            ->selectRaw('ROUND(AVG(CASE WHEN parameter = \"suhu\" THEN value END), 2) as avg_suhu')
+            ->selectRaw('ROUND(MIN(CASE WHEN parameter = \"suhu\" THEN value END), 2) as min_suhu')
+            ->selectRaw('ROUND(MAX(CASE WHEN parameter = \"suhu\" THEN value END), 2) as max_suhu')
+            ->selectRaw('ROUND(AVG(CASE WHEN parameter = \"tds\" THEN value END), 2) as avg_tds')
+            ->selectRaw('ROUND(MIN(CASE WHEN parameter = \"tds\" THEN value END), 2) as min_tds')
+            ->selectRaw('ROUND(MAX(CASE WHEN parameter = \"tds\" THEN value END), 2) as max_tds')
+            ->selectRaw('SUM(CASE WHEN parameter = \"ph\" AND status_pump_ph = 1 THEN 1 ELSE 0 END) as pump_ph_activations')
+            ->selectRaw('SUM(CASE WHEN parameter = \"tds\" AND status_pump_ppm = 1 THEN 1 ELSE 0 END) as pump_ppm_activations')
             ->selectRaw('COUNT(*) as total_records')
             ->groupBy('log_date')
             ->orderBy('log_date', 'asc')
@@ -155,7 +159,7 @@ class SensorExportController extends Controller
      */
     private function fillRealtimeExcel($sheet, $startDate, $endDate, $sensorType)
     {
-        $data = $this->getRealtimeData($startDate, $endDate);
+        $data = $this->getRealtimeData($startDate, $endDate, $sensorType);
 
         // Header row
         $row = 4;
@@ -181,18 +185,19 @@ class SensorExportController extends Controller
             $sheet->setCellValue('A' . $row, $no++);
             $sheet->setCellValue('B' . $row, $item->created_at->format('d/m/Y H:i:s'));
 
+            // Isi kolom sesuai parameter yang tersimpan
             if ($sensorType === 'all' || $sensorType === 'ph') {
-                $sheet->setCellValue('C' . $row, $item->ph);
+                $sheet->setCellValue('C' . $row, $item->parameter === 'ph' ? $item->value : null);
             }
             if ($sensorType === 'all' || $sensorType === 'suhu') {
-                $sheet->setCellValue('D' . $row, $item->suhu);
+                $sheet->setCellValue('D' . $row, $item->parameter === 'suhu' ? $item->value : null);
             }
             if ($sensorType === 'all' || $sensorType === 'tds') {
-                $sheet->setCellValue('E' . $row, $item->tds);
+                $sheet->setCellValue('E' . $row, $item->parameter === 'tds' ? $item->value : null);
             }
             if ($sensorType === 'all') {
-                $sheet->setCellValue('F' . $row, $item->status_pump_ph ? 'ON' : 'OFF');
-                $sheet->setCellValue('G' . $row, $item->status_pump_ppm ? 'ON' : 'OFF');
+                $sheet->setCellValue('F' . $row, $item->parameter === 'ph' && $item->status_pump_ph ? 'ON' : 'OFF');
+                $sheet->setCellValue('G' . $row, $item->parameter === 'tds' && $item->status_pump_ppm ? 'ON' : 'OFF');
             }
 
             $row++;
