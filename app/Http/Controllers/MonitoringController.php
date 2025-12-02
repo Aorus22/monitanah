@@ -11,11 +11,13 @@ class MonitoringController extends Controller
 {
     public function index()
     {
-        $logs = \App\Models\SensorHistory::where('status_pump_ph', 1)
+        $logs = \App\Models\SensorHistory::where('parameter', 'ph')
+            ->where('status_pump_ph', 1)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        $logsppm = \App\Models\SensorHistory::where('status_pump_ppm', 1)
+        $logsppm = \App\Models\SensorHistory::where('parameter', 'tds')
+            ->where('status_pump_ppm', 1)
             ->orderBy('created_at', 'desc')
             ->paginate(10, ['*'], 'ppm');
 
@@ -30,14 +32,16 @@ class MonitoringController extends Controller
 
     public function getSensorHistory(Request $request)
     {
-        $sensorId = $request->input('sensor_id', 1); // Default sensor 1
+        $parameter = $request->input('parameter', 'ph'); // Default parameter pH
+        $sensorNo = $request->input('sensor_no', 1); // Default sensor 1
 
-        // Karena di DB belum ada field sensor_id, return kosong untuk sensor 2,3,4
-        if ($sensorId != 1) {
-            return response()->json([]);
-        }
-
-        $data = SensorData::latest()->limit(50)->get()->reverse()->values();
+        $data = SensorData::where('parameter', $parameter)
+            ->where('sensor_no', $sensorNo)
+            ->latest()
+            ->limit(50)
+            ->get()
+            ->reverse()
+            ->values();
         return response()->json($data);
     }
 
