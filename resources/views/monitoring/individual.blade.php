@@ -16,7 +16,7 @@
             <select id="parameterDropdown" class="w-full sm:w-auto border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
                 <option value="ph">pH</option>
                 <option value="suhu">Suhu</option>
-                <option value="tds">TDS</option>
+                <option value="tds">Kelembapan</option>
             </select>
             <label for="sensorDropdown" class="text-gray-700 font-medium text-sm sm:text-base">Sensor #:</label>
             <select id="sensorDropdown" class="w-full sm:w-auto border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
