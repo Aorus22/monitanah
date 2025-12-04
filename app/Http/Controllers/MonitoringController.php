@@ -30,20 +30,43 @@ class MonitoringController extends Controller
         return view('monitoring.index', compact('logs','logsppm','phLogs','ppmLogs','lastUpdated'));
     }
 
+    // public function getSensorHistory(Request $request)
+    // {
+    //     $parameter = $request->input('parameter', 'ph'); // Default parameter pH
+    //     $sensorNo = $request->input('sensor_no', 1); // Default sensor 1
+
+    //     $data = SensorData::where('parameter', $parameter)
+    //         ->where('sensor_no', $sensorNo)
+    //         ->latest()
+    //         ->limit(50)
+    //         ->get()
+    //         ->reverse()
+    //         ->values();
+    //     return response()->json($data);
+    // }
+
     public function getSensorHistory(Request $request)
     {
-        $parameter = $request->input('parameter', 'ph'); // Default parameter pH
-        $sensorNo = $request->input('sensor_no', 1); // Default sensor 1
-
-        $data = SensorData::where('parameter', $parameter)
+        $parameter = $request->input('parameter', 'ph'); // default pH
+        $sensorNo = $request->input('sensor_no', 1);     // default sensor 1
+    
+        // Group by 1 hour
+        $data = SensorData::selectRaw('
+                DATE_FORMAT(created_at, "%Y-%m-%d %H:00:00") as hour,
+                AVG(value) as avg_value
+            ')
+            ->where('parameter', $parameter)
             ->where('sensor_no', $sensorNo)
-            ->latest()
-            ->limit(50)
+            ->groupBy('hour')
+            ->orderBy('hour', 'DESC')
+            ->limit(720)  // ambil 1 Bulan terakhir
             ->get()
-            ->reverse()
+            ->reverse() // biar urutan dari lama ke baru
             ->values();
+    
         return response()->json($data);
     }
+
 
     //update
 public function selectPlant(Request $request)
